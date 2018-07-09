@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+    
+    <include file="$(find ecn_manip)/robots/rviz.launch">
+        <arg name="model" value="kuka_kr16_support/urdf/kr16.xacro"/>
+        <arg name="config" value="kr16"/>
+    </include>
+  
+</launch>

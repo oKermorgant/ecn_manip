@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="model"/>
+    <arg name="config"/>
+    
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find ecn_manip)/robots/$(arg model)" />
+    
+    <!-- Bridge node to transform high-level position and velocity commands to low-level position setpoints -->
+    <node name="simulator" pkg="ecn_manip" type="arm_bridge.py" output="screen"/>
+
+    <!-- Simulator node -->
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+	
+	<node name="gui" pkg="ecn_manip" type="manip_control.py" respawn="true">
+	<remap from="joint_states" to="gui/position_manual"/>
+	</node>
+	
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find ecn_manip)/robots/rviz_config/$(arg config).rviz" />
+</launch>
