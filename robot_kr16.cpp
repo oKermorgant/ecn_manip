@@ -19,7 +19,7 @@ vpHomogeneousMatrix ecn::RobotKr16::fMw(const vpColVector &q) const
 
 
 // Inverse Kinematics
-vpColVector ecn::RobotKr16::computeIK(const vpHomogeneousMatrix &Md, const vpColVector &q0) const
+vpColVector ecn::RobotKr16::inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const
 {
     vpColVector q(dofs);
 

@@ -18,7 +18,7 @@ vpHomogeneousMatrix ecn::RobotTurret::fMw(const vpColVector &q) const
 
 
 // Inverse Kinematics
-vpColVector ecn::RobotTurret::computeIK(const vpHomogeneousMatrix &Md, const vpColVector &q0) const
+vpColVector ecn::RobotTurret::inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const
 {
     vpColVector q(dofs);
 

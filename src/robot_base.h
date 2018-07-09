@@ -111,7 +111,7 @@ public:
     // to be overloaded
     virtual void initConstantTransforms() = 0;
     virtual vpHomogeneousMatrix fMw(const vpColVector &q) const = 0;
-    virtual vpColVector computeIK(const vpHomogeneousMatrix &Md, const vpColVector &q0) const = 0;
+    virtual vpColVector inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const = 0;
     virtual vpMatrix fJw(const vpColVector &q) const = 0;
 
     // end-effector / wrist DK and Jacobian

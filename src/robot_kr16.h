@@ -32,7 +32,7 @@ public:
     }
     void initConstantTransforms();
     vpHomogeneousMatrix fMw(const vpColVector &q) const;
-    vpColVector computeIK(const vpHomogeneousMatrix &Md, const vpColVector &q0) const;
+    vpColVector inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const;
     vpMatrix fJw(const vpColVector &q) const;
 };
 }
