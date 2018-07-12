@@ -19,6 +19,7 @@ These models will be applied on three different robots, and used to perform basi
 
 As it is not a lab on C++, most of the code is already written and you only have to fill the required functions:
 \begin{itemize}
+	\item \texttt{Robot::init\_wMe()} to initialize the fixed transform between the wrist and end-effector
 	\item \texttt{Robot::fMw(q)} for the direct geometric model wrist-to-fixed frame
 	\item \texttt{Robot::inverseGeometry(M)} for...well, the inverse geometry
 	\item \texttt{Robot::fJw} for the kinematic model wrist-to-fixed frame
@@ -37,8 +38,31 @@ We will use the ViSP\footnote{Visual Servoing Platform, http://visp.inria.fr} li
 
 \section{The robots}
 
-Three robots are proposed with increasing complexity. It is strongly advised to start with the Turret, then the Kuka KR16 then the UR-10.\\
-For each of these robots, the table of modified Denavit-Hartenberg parameters should be defined.
+Three robots are proposed with increasing complexity. You should start with the Turret, then the Kuka KR16 then the UR-10.\\
+For each of these robots, the table of Modified Denavit-Hartenberg parameters should be defined. As we saw during the lectures, once you have the table then the Direct Geometric and Direct Kinematic Models can be almost automatically derived. A tool is provided in this package to generate C++ code for the Geometric and Kinematic models, see Appendix \ref{dhcode} for details on this tool.
+
+The robots are detailed in Appendix \ref{robots}. The fixed frame and the end-effector frames are imposed by the schematics. 
+All intermediary frames have to be placed according to MDH convention, with a final fixed transform between the wrist and end-effector frames.
+
+\subsection{Running the simulation}
+
+Once everything is installed and compiled (see Appendix \ref{ros}), the base simulation can be run from a terminal (only 1 line depending on the robot you work on):
+\cppstyle
+\begin{lstlisting}
+roslaunch ecn_manip turret.launch
+roslaunch ecn_manip kr16.launch
+roslaunch ecn_manip ur10.launch
+\end{lstlisting}
+
+\subsection{Direct Geometric Model}
+
+\def\eMw{{}^e\M_w}
+
+The first part is to build the direct geometric model, depending on the current value of $\q$. This is to be done in two functions:
+\begin{itemize}
+	\item \texttt{Robot::init\_wMe()} where you have to write the constant matrix $\eMw$ from the end-effector to the wrist frame
+	\item \texttt{Robot::fMw(q)}  where you have to write and return the transform $\M$ between the fixed and wrist frames.
+\end{itemize}
 
 \section{Building the models}
 
@@ -56,6 +80,7 @@ You should have a folder named \texttt{ros} in your home directory. Open a termi
 	\item Clone this project inside  \texttt{ros/src}
 	\begin{center}\cppstyle
 		\begin{lstlisting}
+		cd ~/ros
 		mkdir src
 		cd src
 		git clone https://github.com/oKermorgant/ecn_manip.git
@@ -71,6 +96,48 @@ You should have a folder named \texttt{ros} in your home directory. Open a termi
 	
 \end{enumerate}
 
+\section{Robots to be modeled}\label{robots}
+
+
+\subsection{Turret RRP robot}
+
+\begin{minipage}{.8\linewidth}
+	This is a very simple robot to begin the modeling, as shown in the next figure.\\
+	The fixed frame $\Frame{0}$ and end-effector frame $\Frame{e}$ are imposed, as well as the joint direction.\\
+	The constant values for this model are: $b = 0.5$ m and $d = 0.1$ m.	
+\end{minipage}
+\begin{minipage}{.2\linewidth}
+	\includegraphics{fig/turret}\label{turret}
+\end{minipage}
+
+\subsection{Kuka KR16 anthropomorphic robot}
+
+This robot is a classical 6R architecture with a spherical wrist, as shown in the next figure:
+
+\begin{figure}[h!]\centering
+	\includegraphics[width=.6\linewidth]{fig/kr16}
+	\caption{Model of the Kuka KR16 with imposed fixed and end-effector frames}
+\end{figure}
+
+
 \section{Using ViSP}\label{visp}
+
+
+\section{Code generation from Modified Denavit-Hartenberg parameters}\label{dhcode}
+
+The core of robot modeling is to build the MDH table. From this, the DGM and KM can be derived automatically. The Inverse Geometry still has to be done by hand (even if some advanced tools allow code-generation for the IG resolution).
+
+As it is quite tedious to have to recompute all matrices when we see the MDH parameters are wrong, a tool is provided to generate the C++ code. An example can be found in the file \texttt{dh\_example.yml}:
+\cppstyle
+\begin{lstlisting}
+notation: [alpha, a, theta, r]
+joint:
+1: [0, 0, q1, 0]
+2: [-pi/2, 0, 0, q2]
+3: [pi/2, 0, q3, r3]
+4: [-pi/2, a4, q4+pi/2, 0]
+\end{lstlisting}
+
+
 
 \end{document}

@@ -3,7 +3,7 @@
 // Model of UR-10 robot
 
 // Any constant transform at base of end-effector
-void ecn::RobotUR10::initConstantTransforms()
+void ecn::RobotUR10::init_wMe()
 {
 
 }

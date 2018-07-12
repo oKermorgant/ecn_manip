@@ -13,24 +13,24 @@ public:
     {
         vpPoseVector p;
 
-        p[0] = 2.26116489;
-        p[1] =   0.3939218829;
-        p[2] =  0.7428915174 ;
-        p[3] = -0.6677717793;
-        p[4] =   2.524004629;
-        p[5] =   1.167453601;
+        p[0] = 0.812110097;
+        p[1] = -1.187465983;
+        p[2] = 0.4915271277;
+        p[3] = 0.9423584377;
+        p[4] = -2.852157604;
+        p[5] =  0.1075927581;
         M1_.buildFrom(p);
 
-        p[0] = 1.402406755;
-        p[1] =   1.362092363;
-        p[2] =   1.677578319;
-        p[3] =   1.914559837;
-        p[4] =   0.3815079999;
-        p[5] =   1.153593361;
+        p[0] = 1.282877001;
+        p[1] = 0.3344962596;
+        p[2] = 1.415167601;
+        p[3] = -1.142592072;
+        p[4] = 1.424640835;
+        p[5] =  1.004968206;
         M2_.buildFrom(p);
-        initConstantTransforms();
+        init_wMe();
     }
-    void initConstantTransforms();
+    void init_wMe();
     vpHomogeneousMatrix fMw(const vpColVector &q) const;
     vpColVector inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const;
     vpMatrix fJw(const vpColVector &q) const;

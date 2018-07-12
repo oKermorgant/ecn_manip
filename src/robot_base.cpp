@@ -13,8 +13,7 @@ Robot::Robot(const urdf::Model &model, double rate)
 {    
     nh = std::unique_ptr<ros::NodeHandle>(new ros::NodeHandle);
     this->rate = std::unique_ptr<ros::Rate>(new ros::Rate(rate));
-    tr = std::unique_ptr<tf::TransformBroadcaster>(new tf::TransformBroadcaster);
-    tl = std::unique_ptr<tf::TransformListener>(new tf::TransformListener);
+    br = std::unique_ptr<tf2_ros::TransformBroadcaster>(new tf2_ros::TransformBroadcaster);
 
     // init joints
     v_max_.clear();

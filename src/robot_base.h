@@ -8,9 +8,9 @@
 #include <sensor_msgs/JointState.h>
 #include <string>
 #include <memory>
-#include <tf/transform_broadcaster.h>
-#include <tf/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>
 #include <std_msgs/Float32MultiArray.h>
+#include <geometry_msgs/Twist.h>
 #include <urdf/model.h>
 #include <ecn_manip/RobotConfig.h>
 
@@ -98,18 +98,11 @@ public:
 
     void displayFrame(const vpHomogeneousMatrix &M, std::string name = "estim_DK") const
     {
-        const vpTranslationVector t(M);
-        vpQuaternionVector qu; M.extract(qu);
-        tf::StampedTransform transform;
-        transform.setOrigin({t[0], t[1], t[2]});
-        transform.setRotation({qu.x(), qu.y(), qu.z(), qu.w()});
-        transform.child_frame_id_ = name;
-        transform.frame_id_ = "base_link";
-        tr->sendTransform(transform);
+        br->sendTransform(buildTransformStamped(M, name));
     }
 
     // to be overloaded
-    virtual void initConstantTransforms() = 0;
+    virtual void init_wMe() = 0;
     virtual vpHomogeneousMatrix fMw(const vpColVector &q) const = 0;
     virtual vpColVector inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const = 0;
     virtual vpMatrix fJw(const vpColVector &q) const = 0;
@@ -139,8 +132,7 @@ protected:
     std::unique_ptr<ros::NodeHandle> nh;
     ros::Publisher cmd_pub, desired_pose_pub;
     ros::Subscriber position_sub, twist_sub, config_sub;
-    std::unique_ptr<tf::TransformBroadcaster> tr;
-    std::unique_ptr<tf::TransformListener> tl;
+    std::unique_ptr<tf2_ros::TransformBroadcaster> br;
     sensor_msgs::JointState joint_cmd;
     geometry_msgs::Twist desired_twist;
     std_msgs::Float32MultiArray desired_pose;
@@ -155,6 +147,24 @@ protected:
     void onReadConfig(const ecn_manip::RobotConfig &_msg)
     {
         config = _msg;
+    }
+
+    geometry_msgs::TransformStamped buildTransformStamped(const vpHomogeneousMatrix &M, const std::string &frame) const
+    {
+        const vpTranslationVector t(M);
+        vpQuaternionVector qu; M.extract(qu);
+        geometry_msgs::TransformStamped transform;
+        transform.transform.translation.x = t[0];
+        transform.transform.translation.y = t[1];
+        transform.transform.translation.z = t[2];
+        transform.transform.rotation.x = qu.x();
+        transform.transform.rotation.y = qu.y();
+        transform.transform.rotation.z = qu.z();
+        transform.transform.rotation.w = qu.w();
+        transform.header.stamp = ros::Time::now();
+        transform.header.frame_id = "base_link";
+        transform.child_frame_id  = frame;
+        return transform;
     }
 
     void updateDesiredPose()
@@ -176,14 +186,7 @@ protected:
         else
             new_ref = false;
 
-        const vpTranslationVector t(Md());
-        vpQuaternionVector qu; Md().extract(qu);
-        tf::StampedTransform transform;
-        transform.setOrigin({t[0], t[1], t[2]});
-        transform.setRotation({qu.x(), qu.y(), qu.z(), qu.w()});
-        transform.child_frame_id_ = "target";
-        transform.frame_id_ = "base_link";
-        tr->sendTransform(transform);
+        br->sendTransform(buildTransformStamped(Md(), "target"));
     }
 };
 

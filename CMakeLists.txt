@@ -10,7 +10,7 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
-  tf
+  tf2_ros
   urdf
   message_generation
 )
@@ -41,7 +41,7 @@ generate_messages(
 catkin_package(
 INCLUDE_DIRS src
 LIBRARIES ecn_manip
-CATKIN_DEPENDS roscpp sensor_msgs tf urdf
+CATKIN_DEPENDS roscpp sensor_msgs tf2_ros urdf
 #  DEPENDS system_lib
 )
 

@@ -461,10 +461,11 @@ if __name__ == '__main__':
     parser.add_argument('files', metavar='file', type=str, nargs='+', help='File (and base and end-effector frames for URDF)')
 
     parser.add_argument('-q', metavar='q', help='How the joint vector appears in the code',default='q')
-    parser.add_argument('-T', metavar='T', help='How the pose matrix appears in the code',default='T')
+    parser.add_argument('-T', metavar='M', help='How the pose matrix appears in the code',default='M')
     parser.add_argument('-J', metavar='J', help='How the Jacobian matrix appears in the code',default='J') 
     parser.add_argument('--all_J', action='store_true', help='Computes the Jacobian of all frames',default=False)
     parser.add_argument('--only-fixed', action='store_true', help='Only computes the fixed matrices, before and after the arm',default=False)
+    parser.add_argument('--wrist', action='store_true', help='For a 6-dof robot, prints the model of the wrist to help computing inverse geometry',default=False)
     args = parser.parse_args()
 
     # check robot description file
@@ -536,4 +537,15 @@ if __name__ == '__main__':
             lines.append(line)
         print '\n'.join(sorted(lines))
         print '// End of constants'
-            
+        
+    if dof == 6 and args.wrist:
+        print('\n\nModel from fixed to wrist frame:')
+        print('Rotation:')
+        for i in range(3):
+            print('R{}:'.format(i+1))
+            sympy.pretty_print(T0[-1][:3,i])
+        print('Translation:')
+        sympy.pretty_print(T0[-1][:3,3])
+        
+        
+        

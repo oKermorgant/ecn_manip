@@ -3,7 +3,7 @@
 // Model of Turret robot
 
 // Any constant transform at base of end-effector
-void ecn::RobotTurret::initConstantTransforms()
+void ecn::RobotTurret::init_wMe()
 {
 
 }

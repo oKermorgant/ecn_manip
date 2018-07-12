@@ -3,7 +3,7 @@
 // Model of Kuka KR16 robot
 
 // Any end-effector to wrist constant transform
-void ecn::RobotKr16::initConstantTransforms()
+void ecn::RobotKr16::init_wMe()
 {
 
 }

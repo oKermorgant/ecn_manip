@@ -116,12 +116,16 @@ Visualization Manager:
           Value: false
         ee_link:
           Value: false
+        estim_DK:
+          Value: true
         forearm_link:
           Value: false
         shoulder_link:
           Value: false
+        target:
+          Value: true
         tool0:
-          Value: false
+          Value: true
         upper_arm_link:
           Value: false
         world:
@@ -141,6 +145,8 @@ Visualization Manager:
         base_link:
           base_rotated:
             {}
+          estim_DK:
+            {}
           shoulder_link:
             upper_arm_link:
               forearm_link:
@@ -151,6 +157,8 @@ Visualization Manager:
                         {}
                       tool0:
                         {}
+          target:
+            {}
           world:
             {}
       Update Interval: 0
@@ -187,18 +195,18 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.2374405711889267
-        Y: -0.38005781173706055
-        Z: 0.32908931374549866
+        X: -0.12067411839962006
+        Y: -0.5923064351081848
+        Z: 0.4606846272945404
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4303983151912689
+      Pitch: 0.6003983616828918
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.355396270751953
+      Yaw: 1.9653962850570679
     Saved: ~
 Window Geometry:
   "&Displays":

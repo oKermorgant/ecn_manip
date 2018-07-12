@@ -24,9 +24,9 @@ public:
         p[4] = 0.2796438558;
         p[5] = -2.275845114;
         M2_.buildFrom(p);
-        initConstantTransforms();
+        init_wMe();
     }
-    void initConstantTransforms();
+    void init_wMe();
     vpHomogeneousMatrix fMw(const vpColVector &q) const;
     vpColVector inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const;
     vpMatrix fJw(const vpColVector &q) const;
