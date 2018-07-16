@@ -8,7 +8,7 @@ void ecn::RobotKr16::init_wMe()
 
 }
 
-// Direct Kinematics
+// Direct Geometry fixed to wrist frame
 vpHomogeneousMatrix ecn::RobotKr16::fMw(const vpColVector &q) const
 {
     vpHomogeneousMatrix M;
@@ -18,10 +18,15 @@ vpHomogeneousMatrix ecn::RobotKr16::fMw(const vpColVector &q) const
 }
 
 
-// Inverse Kinematics
+// Inverse Geometry
 vpColVector ecn::RobotKr16::inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const
 {
     vpColVector q(dofs);
+
+    // desired wrist pose
+    vpHomogeneousMatrix fMw = Md * wMe.inverse();
+
+
 
 
     return q;

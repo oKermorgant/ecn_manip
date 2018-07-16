@@ -2,6 +2,7 @@
 #define ROBOT_UR10_H
 
 #include <robot_base.h>
+#include <ur_kin/ur_kin.h>
 
 namespace ecn
 {
@@ -31,7 +32,39 @@ public:
     }
     void init_wMe();
     vpHomogeneousMatrix fMw(const vpColVector &q) const;
-    vpColVector inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const;
+    vpColVector inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const
+    {
+        vpMatrix q_sol(8,6);
+        vpHomogeneousMatrix eMw;
+        eMw[0][0] = eMw[1][1] = eMw[2][2] = 0;
+        eMw[1][2] = eMw[0][1] = -1;
+        eMw[2][0] = 1;
+        //eMw[1][2] = 1;
+
+        vpHomogeneousMatrix M = Md*eMw;
+        int sols = ur_kinematics::inverse(M.data, q_sol.data);
+        for(int i = 0; i < sols; ++i)
+        {
+            for(int j = 0; j <6; ++j)
+                if(q_sol[i][j] > M_PI)
+                    q_sol[i][j] -= 2*M_PI;
+        }
+
+        // get nearest position from q0
+        int best = 0;
+        double best_dist = (q_sol.getRow(0).t() - q0).euclideanNorm();
+        for(int i = 1; i < sols; ++i)
+        {
+            const double d = (q_sol.getRow(i).t() - q0).euclideanNorm();
+            if(d < best_dist)
+            {
+                best = i;
+                best_dist = d;
+            }
+        }
+        return q_sol.getRow(best).t();
+    }
+
     vpMatrix fJw(const vpColVector &q) const;
 };
 

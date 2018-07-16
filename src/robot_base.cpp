@@ -2,6 +2,7 @@
 #include <robot_base.h>
 #include <urdf/model.h>
 #include <visp/vpExponentialMap.h>
+#include <visp/vpRxyzVector.h>
 #include <algorithm>
 
 using std::string;
@@ -14,6 +15,9 @@ Robot::Robot(const urdf::Model &model, double rate)
     nh = std::unique_ptr<ros::NodeHandle>(new ros::NodeHandle);
     this->rate = std::unique_ptr<ros::Rate>(new ros::Rate(rate));
     br = std::unique_ptr<tf2_ros::TransformBroadcaster>(new tf2_ros::TransformBroadcaster);
+    tfBuffer = std::unique_ptr<tf2_ros::Buffer>(new tf2_ros::Buffer);
+    tl = std::unique_ptr<tf2_ros::TransformListener>(new tf2_ros::TransformListener(*tfBuffer.get()));
+    t_gt = 0;
 
     // init joints
     v_max_.clear();
@@ -66,6 +70,36 @@ Robot::Robot(const urdf::Model &model, double rate)
     ros::spinOnce();
 }
 
+void Robot::checkPose(const vpHomogeneousMatrix &M)
+{
+    if(ros::Time::now().toSec() - t_gt > 1)
+    {
+        t_gt = ros::Time::now().toSec();
+        // passed transform
+        vpRxyzVector rot(M.getRotationMatrix());
+        std::cout << "Computed:     t = " << M.getTranslationVector().t() <<
+                     " / RPY = " << rot.t() << std::endl;
+
+        displayFrame(M);
+
+        // check with simulation
+        if(tfBuffer->canTransform("base_link", "tool0", ros::Time(0)))
+        {
+            auto transform = tfBuffer->lookupTransform("base_link", "tool0", ros::Time(0));
+            vpTranslationVector t(transform.transform.translation.x,
+                                  transform.transform.translation.y,
+                                  transform.transform.translation.z);
+            rot.buildFrom(vpThetaUVector(
+                              vpQuaternionVector(transform.transform.rotation.x,
+                                                 transform.transform.rotation.y,
+                                                 transform.transform.rotation.z,
+                                                 transform.transform.rotation.w)));
+            std::cout << "Ground truth: t = " << t.t() <<
+                         " / RPY = " << rot.t() << std::endl << std::endl;
+        }
+    }
+}
+
 vpHomogeneousMatrix Robot::intermediaryPose(vpHomogeneousMatrix M1, vpHomogeneousMatrix M2, double a)
 {
     if(a <= 0)
@@ -85,7 +119,7 @@ vpHomogeneousMatrix Robot::intermediaryPose(vpHomogeneousMatrix M1, vpHomogeneou
     M1[0][3] = M1[1][3] = M1[2][3] = 0;
     M2[0][3] = M2[1][3] = M2[2][3] = 0;
     // t-part
-   // for(unsigned int i = 0; i < 3; ++i)
+    // for(unsigned int i = 0; i < 3; ++i)
     //    M[i][3] = (1-a)*M1[i][3] + a*M2[i][3];
 
     const vpColVector v = vpExponentialMap::inverse(M1.inverse() * M2);
@@ -173,7 +207,7 @@ vpMatrix Robot::fJe(const vpColVector &q) const
 {
     vpMatrix V(6,6);
     for(unsigned int i = 0; i < 6; ++i)
-            V[i][i] = 1;
+        V[i][i] = 1;
     vpSubMatrix Vs(V, 0, 3, 3, 3);
     Vs = -(fMw(q).getRotationMatrix() * wMe.getTranslationVector()).skew();
 

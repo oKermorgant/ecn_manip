@@ -41,14 +41,15 @@ int main(int argc, char ** argv)
         cout << "Current joint position : " << q.t() << endl;
 
         // Direct Geometry for end-effector
-        M = robot->fMe(q);
-        p.buildFrom(M);
+        M = robot->fMe(q);  // matrix form
+        p.buildFrom(M);     // translation + angle-axis form
+
 
         switch(robot->mode())
         {
         case 0:
-            // just print the Direct Geometric Model
-            cout << "DGM: " << p.t() << endl;
+            // just check the Direct Geometric Model
+            robot->checkPose(M);
             break;
 
         case 1:

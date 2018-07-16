@@ -9,6 +9,7 @@
 #include <string>
 #include <memory>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/transform_listener.h>
 #include <std_msgs/Float32MultiArray.h>
 #include <geometry_msgs/Twist.h>
 #include <urdf/model.h>
@@ -54,13 +55,8 @@ public:
         return qr;
     }
 
-    // prints translation + quaternion
-    void printPose(const vpHomogeneousMatrix &M)  const
-    {
-        std::cout << "t: " << M[0][3] << ", " << M[1][3] << ", " << M[2][3] << std::endl;
-        vpQuaternionVector qu;M.extract(qu);
-        std::cout << "qu: " << qu.t() << std::endl;
-    }
+    // prints translation + roll pitch yaw
+    void checkPose(const vpHomogeneousMatrix &M);
 
     // desired poses
     vpHomogeneousMatrix M0() const {return fwd?M1_:M2_;}
@@ -96,7 +92,7 @@ public:
     // stop motion
     inline void stopMotion() {setJointPosition(q_);}
 
-    void displayFrame(const vpHomogeneousMatrix &M, std::string name = "estim_DK") const
+    void displayFrame(const vpHomogeneousMatrix &M, std::string name = "estim_DG") const
     {
         br->sendTransform(buildTransformStamped(M, name));
     }
@@ -133,9 +129,12 @@ protected:
     ros::Publisher cmd_pub, desired_pose_pub;
     ros::Subscriber position_sub, twist_sub, config_sub;
     std::unique_ptr<tf2_ros::TransformBroadcaster> br;
+    std::unique_ptr<tf2_ros::Buffer> tfBuffer;
+    std::unique_ptr<tf2_ros::TransformListener> tl;
     sensor_msgs::JointState joint_cmd;
     geometry_msgs::Twist desired_twist;
     std_msgs::Float32MultiArray desired_pose;
+    double t_gt;    // last time we checked the ground truth
 
     void onReadPosition(const sensor_msgs::JointState::ConstPtr& _msg);
 

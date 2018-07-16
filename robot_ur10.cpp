@@ -18,16 +18,10 @@ vpHomogeneousMatrix ecn::RobotUR10::fMw(const vpColVector &q) const
 }
 
 
-// Inverse Kinematics
-vpColVector ecn::RobotUR10::inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const
-{
-    vpColVector q(dofs);
+// Inverse Kinematics is already given for this robot
 
 
-    return q;
-}
-
-
+// Wrist Jacobian
 vpMatrix ecn::RobotUR10::fJw(const vpColVector &q) const
 {
     vpMatrix J(6, dofs);

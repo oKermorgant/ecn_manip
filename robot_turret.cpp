@@ -8,7 +8,7 @@ void ecn::RobotTurret::init_wMe()
 
 }
 
-// Direct Kinematics
+// Direct Geometry
 vpHomogeneousMatrix ecn::RobotTurret::fMw(const vpColVector &q) const
 {
     vpHomogeneousMatrix M;
@@ -17,7 +17,7 @@ vpHomogeneousMatrix ecn::RobotTurret::fMw(const vpColVector &q) const
 }
 
 
-// Inverse Kinematics
+// Inverse Geometry
 vpColVector ecn::RobotTurret::inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const
 {
     vpColVector q(dofs);
@@ -26,7 +26,7 @@ vpColVector ecn::RobotTurret::inverseGeometry(const vpHomogeneousMatrix &Md, con
     return q;
 }
 
-
+// Wrist Jacobian
 vpMatrix ecn::RobotTurret::fJw(const vpColVector &q) const
 {
     vpMatrix J(6, dofs);

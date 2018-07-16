@@ -57,7 +57,8 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(ecn_manip src/robot_base.h src/robot_base.cpp src/robot_init.h)
+add_library(ecn_manip src/robot_base.h src/robot_base.cpp src/robot_init.h
+            src/ur_kin/ur_kin.h src/ur_kin/ur_kin.cpp)
 target_link_libraries(ecn_manip ${catkin_LIBRARIES} ${VISP_LIBRARIES} )
 add_dependencies(ecn_manip ${${PROJECT_NAME}_EXPORTED_TARGETS})
 

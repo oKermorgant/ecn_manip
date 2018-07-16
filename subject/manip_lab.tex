@@ -61,7 +61,7 @@ roslaunch ecn_manip ur10.launch
 The first part is to build the direct geometric model, depending on the current value of $\q$. This is to be done in two functions:
 \begin{itemize}
 	\item \texttt{Robot::init\_wMe()} where you have to write the constant matrix $\eMw$ from the end-effector to the wrist frame
-	\item \texttt{Robot::fMw(q)}  where you have to write and return the transform $\M$ between the fixed and wrist frames.
+	\item \texttt{Robot::fMw(q)}  where you have to write and return the transform $\M$ between the fixed and wrist frame
 \end{itemize}
 
 \section{Building the models}
@@ -102,7 +102,7 @@ You should have a folder named \texttt{ros} in your home directory. Open a termi
 \subsection{Turret RRP robot}
 
 \begin{minipage}{.8\linewidth}
-	This is a very simple robot to begin the modeling, as shown in the next figure.\\
+	This is a very simple robot to begin the modeling, as shown in the figure.\\
 	The fixed frame $\Frame{0}$ and end-effector frame $\Frame{e}$ are imposed, as well as the joint direction.\\
 	The constant values for this model are: $b = 0.5$ m and $d = 0.1$ m.	
 \end{minipage}
@@ -119,15 +119,16 @@ This robot is a classical 6R architecture with a spherical wrist, as shown in th
 	\caption{Model of the Kuka KR16 with imposed fixed and end-effector frames}
 \end{figure}
 
-
+\newpage
 \section{Using ViSP}\label{visp}
 
 
+\newpage
 \section{Code generation from Modified Denavit-Hartenberg parameters}\label{dhcode}
 
 The core of robot modeling is to build the MDH table. From this, the DGM and KM can be derived automatically. The Inverse Geometry still has to be done by hand (even if some advanced tools allow code-generation for the IG resolution).
 
-As it is quite tedious to have to recompute all matrices when we see the MDH parameters are wrong, a tool is provided to generate the C++ code. An example can be found in the file \texttt{dh\_example.yml}:
+As it is quite tedious to have to recompute all matrices when a solution of MDH is investigated, a tool is provided to generate the C++ code. An example can be found in the file \texttt{dh\_example.yml}:
 \cppstyle
 \begin{lstlisting}
 notation: [alpha, a, theta, r]
@@ -137,6 +138,81 @@ joint:
 3: [pi/2, 0, q3, r3]
 4: [-pi/2, a4, q4+pi/2, 0]
 \end{lstlisting}
+The command to be run is: \texttt{rosrun ecn\_manip dh\_code.py <name of the file>}.\\
+In the case of the above MDH table, it leads to these outputs:
+
+\begin{minipage}{.45\linewidth}
+\cppstyle \raggedright
+\begin{lstlisting}
+// Generated pose code                                                                                                                                                                                                                  
+const double c1 = cos(q[0]);                                                                                                                                                                                                            
+const double c1p3 = cos(q[0]+q[2]);                                                                                                                                                                                                     
+const double c4 = cos(q[3]);                                                                                                                                                                                                            
+const double s1 = sin(q[0]);                                                                                                                                                                                                            
+const double s1p3 = sin(q[0]+q[2]);                                                                                                                                                                                                     
+const double s4 = sin(q[3]);                                                                                                                                                                                                            
+M[0][0] = -s4*c1p3;                                                                                                                                                                                                                     
+M[0][1] = -c4*c1p3;                                                                                                                                                                                                                     
+M[0][2] = -s1p3;                                                                                                                                                                                                                        
+M[0][3] = a4*c1p3 - q[1]*s1;                                                                                                                                                                                                            
+M[1][0] = -s4*s1p3;
+M[1][1] = -s1p3*c4;
+M[1][2] = c1p3;
+M[1][3] = a4*s1p3 + q[1]*c1;
+M[2][0] = -c4;
+M[2][1] = s4;
+M[2][2] = 0;
+M[2][3] = r3;
+M[3][0] = 0;
+M[3][1] = 0;
+M[3][2] = 0;
+M[3][3] = 1.;
+// End of pose code
+\end{lstlisting}
+\end{minipage}
+\begin{minipage}{.1\linewidth}
+	\quad\quad
+\end{minipage}
+\begin{minipage}{.45\linewidth}
+\cppstyle \raggedright
+\begin{lstlisting}
+// Generated Jacobian code
+const double c1 = cos(q[0]);
+const double c1p3 = cos(q[0]+q[2]);
+const double s1 = sin(q[0]);
+const double s1p3 = sin(q[0]+q[2]);
+J[0][0] = -a4*s1p3 - q[1]*c1;
+J[0][1] = -s1;
+J[0][2] = -a4*s1p3;
+//J[0][3] = 0;
+J[1][0] = a4*c1p3 - q[1]*s1;
+J[1][1] = c1;
+J[1][2] = a4*c1p3;
+//J[1][3] = 0;
+//J[2][0] = 0;
+//J[2][1] = 0;
+//J[2][2] = 0;
+//J[2][3] = 0;
+//J[3][0] = 0;
+//J[3][1] = 0;
+//J[3][2] = 0;
+J[3][3] = -s1p3;
+//J[4][0] = 0;
+//J[4][1] = 0;
+//J[4][2] = 0;
+J[4][3] = c1p3;
+J[5][0] = 1.;
+//J[5][1] = 0;
+J[5][2] = 1.;
+//J[5][3] = 0;
+// End of Jacobian code
+\end{lstlisting}	
+\end{minipage}
+This is exactly what you would get by doing the manual computation from the initial table, which I hope is quite appreciated.
+
+
+
+
 
 
 
