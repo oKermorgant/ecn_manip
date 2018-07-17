@@ -108,7 +108,6 @@ int main(int argc, char ** argv)
             // use robot->intermediaryPose to build poses between M0 and Md
 
             robot->setJointPosition(qCommand);
-            step_count++;
         }
 
 

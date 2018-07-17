@@ -171,7 +171,7 @@ void Robot::setJointVelocity(const vpColVector &_velocity)
         if(v_max_.size()!=0)
         {
             for(i=0;i<dofs;++i)
-                scale = std::max(1., std::abs(_velocity[i])/v_max_[i]);
+                scale = std::max(scale, std::abs(_velocity[i])/v_max_[i]);
             if(scale > 1)
             {
                 scale = 1./scale;
