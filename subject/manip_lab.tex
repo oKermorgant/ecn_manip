@@ -95,12 +95,24 @@ roslaunch ecn_manip kr16.launch
 roslaunch ecn_manip ur10.launch
 \end{lstlisting}
 
+This will display two windows:
+\begin{itemize}
+	\item RViz is the 3D simulator to show the current configuration of the robot. It will also display the base and end-effector frames, and the one that you compute. You can thus easily check if the computation is fine.
+	\item The other window is composed of 4 panels:
+	\begin{itemize}
+		\item Buttons at the top left to change the current exercise
+		\item Sliders at the bottom left to manually control the robot (exercises 1 and 2)
+		\item Sliders at the top to change the switching time of the position control (exercises 3+)
+		\item A plotting region with two tabs, one for the operational space and one for the joint space. The joint space is displayed in a normalized fashion, depending on the joint limits (upper and lower dotted lines)
+	\end{itemize}
+\end{itemize}
+
 
 \section{Building the models}
 
 \subsection*{The main code}
 
-In the file \texttt{control.cpp}, the switch-case block corresponds to the 6 exercises to be done for each robot. Note that if they work for the Turret robot, then 
+In the file \texttt{control.cpp}, the \texttt{if - else if} blocks correspond to the 6 exercises to be done for each robot. Note that if they work for the Turret robot, then 
 they should work for all robots as long as the model is correct. \\
 The current exercise is changed by using the buttons in the GUI.
 
@@ -126,11 +138,29 @@ You can check that the end-effector is able to follow straight 3D lines in x, y 
 
 If you select \texttt{Direct point-to-point} in the GUI then the robot will receive two operational setpoints, at a given sampling time that can be changed with the \texttt{Switching time} slider in the GUI. The current setpoint is in the matrix \texttt{Md} and its corresponding joint position is in the vector \texttt{qf}. 
 
-Nothing has to be done in the main code, but of course the \texttt{Robot::inverseGeometry(M)} function has to be filled in order to compute the actual inverse geometry solution.
+Nothing has to be done in the main code, but of course the \texttt{Robot::inverseGeometry(M)} function has to be filled in order to compute the actual inverse geometry solution. the robot will try to have all joints reach their desired value as soon as possible, which will lead to a discontinuous motion.\\
+
+In practice, this exercise is to check that the Inverse Geometric Model is correct: the robot should reach the desired pose.
 
 \subsection*{Exercise 4: Interpolated point-to-point control}
 
-\subsection*{Exercise 5: Inverse Geometric Model and trajectory tracking}
+If you select \texttt{Interpolated point-to-point} in the GUI then the robot still receives two operational setpoints.
+The final setpoint is \texttt{Md} and its corresponding joint position is in the vector \texttt{qf}. The previous setpoint is \texttt{M0} and its corresponding joint position is in the vector \texttt{q0}. Those joint positions come from the inverse geometry and should be correct at this point.\\
+
+Here the goal is to compute the current setpoint $\q_c = \q_0 + p(t)(\q_f-\q_0)$. The interpolation function $p(t)$ was defined during the lectures and should take into account the maximum joint velocity and acceleration that are stored in the \texttt{vMax} and \texttt{aMax} vectors. Basically this amounts to computing the minimum time \texttt{tf} needed to reach $\q_f$ from $\q_0$. This computation should be done in the \texttt{if(robot->newRef())} and then used to compute the current \texttt{qCommand}.
+
+
+\subsection*{Exercise 5: Operational control through Inverse Geometric Model}
+
+Exercises 3 and 4 lead to the correct pose but not in a straight 3D line. Indeed the robot is only controlled in the joint space with no constraints between the two extreme poses.\\
+In this exercise, the goal is to perform the interpolation not in the joint space but in the Cartesian space. In practice, we will compute many poses between 
+\texttt{M0} and \texttt{Md} and command the robot to reach sequentially all these poses. As they will be pretty close one from each other, the resulting motion 
+will be close to a straight line.
+
+The \texttt{robot->intermediaryPose(M0, Md, alpha)} function returns a pose between \texttt{M0} and \texttt{Md}, where \texttt{alpha} is between 0 and 1 and should be computed from $t$, $t_0$ and $t_f$ = 1 s.
+
+Then, the inverse geometry of this pose should be sent to the robot as joint position setpoint.
+
 
 \subsection*{Exercise 6: Operational control through Jacobian}
 

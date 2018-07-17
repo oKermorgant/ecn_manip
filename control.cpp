@@ -23,8 +23,6 @@ int main(int argc, char ** argv)
     vpHomogeneousMatrix M0, Md, Mi; // previous, final and current desired poses
     vpPoseVector pd;                // desired pose
     vpColVector v;                  // desired operational velocity
-    float step_count;
-    const unsigned int steps = 100;
 
     // TODO declare other variables if needed
     vpColVector q0(n), qf(n);        // joint position setpoint for initial and final poses
@@ -39,11 +37,8 @@ int main(int argc, char ** argv)
         // update desired pose if has changed
         if(robot->newRef())
         {
-            step_count = 0;
             Md = robot->Md();
             M0 = robot->M0();
-            q0 = robot->inverseGeometry(M0, q);
-            qf = robot->inverseGeometry(Md, q);
             pd.buildFrom(Md);
             t0 = t;
         }
@@ -81,6 +76,7 @@ int main(int argc, char ** argv)
         {
             // find the Inverse Geometry to reach Md
             // TODO: fill the inverseGeometry function
+            qf = robot->inverseGeometry(Md, q);
             robot->setJointPosition(qf);
         }
 
@@ -90,17 +86,14 @@ int main(int argc, char ** argv)
             // reach Md with interpolated joint trajectory
             // use q0 (initial position), qf (final), aMax and vMax
 
-            // if reference has changed, compute tf from
+            // if reference has changed, compute new tf
             if(robot->newRef())
             {
-
-            }
-            else
-            {
-
+                q0 = robot->inverseGeometry(M0, q);
+                qf = robot->inverseGeometry(Md, q);
             }
 
-            // TODO: compute qCommand from q0, qf, t and t0
+            // TODO: compute qCommand from q0, qf, t, t0 and tf
 
             robot->setJointPosition(qCommand);
         }
@@ -108,9 +101,10 @@ int main(int argc, char ** argv)
 
         else if(robot->mode() == ecn::Robot::MODE_STRAIGHT_LINE_P2P)
         {
-            // go from M0 to Md in 100 steps
+            // go from M0 to Md in 1 sec
+            tf = 1;
 
-            // TODO: compute qCommand from M0, Md, step_count and steps
+            // TODO: compute qCommand from M0, Md, t, t0 and tf
             // use robot->intermediaryPose to build poses between M0 and Md
 
             robot->setJointPosition(qCommand);
