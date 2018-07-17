@@ -9,6 +9,7 @@ import signal
 from ecn_manip.msg import RobotConfig
 from geometry_msgs.msg import Twist
 
+rb_order = ('manual', 'twist', 'p2p_direct','p2p_interp','p2p_line','p2p_vel')
 
 class manipControl(QtWidgets.QMainWindow):
     
@@ -23,12 +24,12 @@ class manipControl(QtWidgets.QMainWindow):
         signal.signal(signal.SIGINT, signal.SIG_DFL)
         
         # publisher for mode / switch time / lambda-gain
-        self.config_pub = rospy.Publisher('gui/config', RobotConfig, queue_size=5)
+        self.config_pub = rospy.Publisher('config', RobotConfig, queue_size=5)
         self.config_msg = RobotConfig()
                         
         # radio buttons
         current = 0
-        for i,button in enumerate(('manual', 'twist', 'p2p_direct','p2p_interp','p2p_vel')):
+        for i,button in enumerate(rb_order):
             getattr(self.ui, 'rb_'+ button).clicked.connect(self.mode_update)
             if i == current:
                 getattr(self.ui, 'rb_'+ button).setChecked(True)
@@ -47,7 +48,7 @@ class manipControl(QtWidgets.QMainWindow):
         self.gain_update()
         
         # twist slider
-        self.twist_pub = rospy.Publisher('gui/twist_manual', Twist, queue_size=5)
+        self.twist_pub = rospy.Publisher('twist_manual', Twist, queue_size=5)
         self.twist_msg = Twist()
         for la in ('v','w'):
             for ax in ('x','y','z'):
@@ -62,13 +63,17 @@ class manipControl(QtWidgets.QMainWindow):
         self.ui.plot.addWidget(self.plot.canvas)
         Thread(target=self.plot.loop).start()
         
+        # joint plotter
+        self.plotJoints = manip_plot.JointPlotter()
+        self.ui.plotJoints.addWidget(self.plotJoints.canvas)
+        
         # publish slider values
         Thread(target=self.loop).start()
                
                
     def mode_update(self):
         # get clicked button
-        for i,button in enumerate(('manual', 'twist', 'p2p_direct','p2p_interp','p2p_vel')):
+        for i,button in enumerate(rb_order):
             if getattr(self.ui, 'rb_'+ button).isChecked():
                 self.config_msg.mode = i
                 if i in (0,1):

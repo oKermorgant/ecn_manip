@@ -8,8 +8,11 @@ int main(int argc, char ** argv)
     auto robot = ecn::initRobot(argc, argv, 100);
     const unsigned n = robot->getDofs();
 
+    // robot properties
+    const vpColVector vMax = robot->vMax();
+    const vpColVector aMax = robot->aMax();
+
     // main variables
-    unsigned int iter = 0;          // iteration count
     vpColVector q(n);               // joint position
     vpPoseVector p;                 // operational pose
     vpColVector qCommand(n);        // joint position setpoint
@@ -23,18 +26,28 @@ int main(int argc, char ** argv)
     float step_count;
     const unsigned int steps = 100;
 
-    
+    // TODO declare other variables if needed
+    vpColVector q0(n), qf(n);        // joint position setpoint for initial and final poses
+    double t, t0, tf;
+
     // main control loop
     while(robot->ok())
     {
+        // current time
+        t = ros::Time::now().toSec();
+
         // update desired pose if has changed
         if(robot->newRef())
         {
             step_count = 0;
             Md = robot->Md();
             M0 = robot->M0();
+            q0 = robot->inverseGeometry(M0, q);
+            qf = robot->inverseGeometry(Md, q);
             pd.buildFrom(Md);
+            t0 = t;
         }
+
 
         // get current joint positions
         q = robot->jointPosition();
@@ -44,39 +57,69 @@ int main(int argc, char ** argv)
         M = robot->fMe(q);  // matrix form
         p.buildFrom(M);     // translation + angle-axis form
 
-
-        switch(robot->mode())
+        if(robot->mode() == ecn::Robot::MODE_POSITION_MANUAL)
         {
-        case 0:
             // just check the Direct Geometric Model
+            // TODO: fill the fMw function
             robot->checkPose(M);
-            break;
+        }
 
-        case 1:
+
+        else if(robot->mode() == ecn::Robot::MODE_VELOCITY_MANUAL)
+        {
             // follow a given operational velocity
             v = robot->vw();
 
+            // TODO: fill the fJw function
             // TODO: compute vCommand
 
             robot->setJointVelocity(vCommand);
-            break;
+        }
 
-        case 2:
+
+        else if(robot->mode() == ecn::Robot::MODE_DIRECT_P2P)
+        {
             // find the Inverse Geometry to reach Md
-            qCommand = robot->inverseGeometry(Md, q);
-            robot->setJointPosition(qCommand);
-            break;
+            // TODO: fill the inverseGeometry function
+            robot->setJointPosition(qf);
+        }
 
-        case 3:
+
+        else if(robot->mode() == ecn::Robot::MODE_INTERP_P2P)
+        {
+            // reach Md with interpolated joint trajectory
+            // use q0 (initial position), qf (final), aMax and vMax
+
+            // if reference has changed, compute tf from
+            if(robot->newRef())
+            {
+
+            }
+            else
+            {
+
+            }
+
+            // TODO: compute qCommand from q0, qf, t and t0
+
+            robot->setJointPosition(qCommand);
+        }
+
+
+        else if(robot->mode() == ecn::Robot::MODE_STRAIGHT_LINE_P2P)
+        {
             // go from M0 to Md in 100 steps
 
             // TODO: compute qCommand from M0, Md, step_count and steps
+            // use robot->intermediaryPose to build poses between M0 and Md
 
             robot->setJointPosition(qCommand);
             step_count++;
-            break;
+        }
 
-        case 4:
+
+        else if(robot->mode() == ecn::Robot::MODE_VELOCITY_P2P)
+        {
             // go to Md using operational velocity
 
             // TODO: compute joint velocity command
@@ -86,5 +129,7 @@ int main(int argc, char ** argv)
             robot->setJointVelocity(vCommand);
             break;
         }
+
+
     }
 }

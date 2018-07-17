@@ -14,24 +14,13 @@
    <string>Manipulator Control</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QWidget" name="verticalLayoutWidget_2">
-    <property name="geometry">
-     <rect>
-      <x>340</x>
-      <y>40</y>
-      <width>961</width>
-      <height>641</height>
-     </rect>
-    </property>
-    <layout class="QVBoxLayout" name="plot"/>
-   </widget>
    <widget class="QWidget" name="gridLayoutWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>0</y>
       <width>321</width>
-      <height>141</height>
+      <height>164</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
@@ -49,17 +38,17 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
+     <item row="5" column="0">
       <widget class="QRadioButton" name="rb_p2p_vel">
        <property name="text">
         <string>Veloc&amp;ity point-to-point</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
-      <widget class="QRadioButton" name="rb_p2p_interp">
+     <item row="4" column="0">
+      <widget class="QRadioButton" name="rb_p2p_line">
        <property name="text">
-        <string>Interpolated point-&amp;to-point</string>
+        <string>Straight line point-&amp;to-point</string>
        </property>
       </widget>
      </item>
@@ -67,6 +56,13 @@
       <widget class="QRadioButton" name="rb_twist">
        <property name="text">
         <string>Ma&amp;nual Cartesian control</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QRadioButton" name="rb_p2p_interp">
+       <property name="text">
+        <string>Interpo&amp;lated point-to-point</string>
        </property>
       </widget>
      </item>
@@ -160,16 +156,16 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>150</y>
+      <y>170</y>
       <width>321</width>
-      <height>531</height>
+      <height>511</height>
      </rect>
     </property>
     <property name="tabPosition">
      <enum>QTabWidget::North</enum>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -473,6 +469,51 @@
         </widget>
        </item>
       </layout>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QTabWidget" name="plotTabs">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>40</y>
+      <width>961</width>
+      <height>641</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="tab_3">
+     <attribute name="title">
+      <string>Operational space</string>
+     </attribute>
+     <widget class="QWidget" name="verticalLayoutWidget_2">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>941</width>
+        <height>591</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="plot"/>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_4">
+     <attribute name="title">
+      <string>Joint space</string>
+     </attribute>
+     <widget class="QWidget" name="verticalLayoutWidget_4">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>941</width>
+        <height>591</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="plotJoints"/>
      </widget>
     </widget>
    </widget>

@@ -29,7 +29,19 @@ namespace ecn
 
 class Robot {
 
+
 public:
+
+    enum GUI_MODE
+    {
+        MODE_POSITION_MANUAL,
+        MODE_VELOCITY_MANUAL,
+        MODE_DIRECT_P2P,
+        MODE_INTERP_P2P,
+        MODE_STRAIGHT_LINE_P2P,
+        MODE_VELOCITY_P2P
+    };
+
 
     // constructor
     Robot(const urdf::Model &model, double rate = 100);
@@ -54,6 +66,8 @@ public:
             qr[i] = ((q_max[i] - q_min[i])*rand())/RAND_MAX + q_min[i];
         return qr;
     }
+    vpColVector vMax() const {return v_max_;}
+    vpColVector aMax() const {return 0.5*v_max_;}
 
     // prints translation + roll pitch yaw
     void checkPose(const vpHomogeneousMatrix &M);
@@ -116,7 +130,8 @@ protected:
     vpColVector q_;
 
     // joint limits
-    std::vector<double> v_max_, q_max, q_min;
+    std::vector<double> q_max, q_min;
+    vpColVector v_max_;
 
     // 2 desired poses for switching
     vpHomogeneousMatrix M1_, M2_;

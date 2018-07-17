@@ -25,7 +25,21 @@ As it is not a lab on C++, most of the code is already written and you only have
 	\item \texttt{Robot::fJw} for the kinematic model wrist-to-fixed frame
 \end{itemize}
 
-This project uses the ROS\footnote{Robot Operating System, http://www.ros.org} framework which imposes some particular steps to configure the environment. They are detailed in Appendix \ref{ros}.
+\subsection{Installing and loading the lab in Qt Creator}
+
+This project uses the ROS\footnote{Robot Operating System, http://www.ros.org} framework which imposes some particular steps to configure the environment. An actual ROS course will be held in the second semester, for now just configure as follows:
+
+\begin{enumerate}
+	\item Open a terminal and download the lab package: \texttt{rosdl ecn\_manip}.
+	\item Run Qt Creator from the top screen icon
+	\item Load the \texttt{ros/src/ecn\_manip/CMakeLists.txt} file through \texttt{File...open project}
+	\item QtCreator asks for a compilation folder: give \texttt{ros/build/ecn\_manip}
+	\item The files should be displayed and ready to compile and run
+	\item Compilation is done by clicking the bottom-left hammer
+	\item Run your program with the green triangle. It can be stopped by clicking on the red square
+\end{enumerate}
+
+\subsection{Expected work}
 
 The {\bf only} files to be modified are:
 \begin{itemize}
@@ -35,76 +49,25 @@ The {\bf only} files to be modified are:
 	\item \texttt{robot\_ur10.cpp}: model of the Universal Robot UR-10
 \end{itemize}
 We will use the ViSP\footnote{Visual Servoing Platform, http://visp.inria.fr} library to manipulate mathematical vectors and matrices, including frame transforms, rotations, etc. The main classes are detailed in Appendix \ref{visp}.\\
+At the end of the lab, you should upload them through the \link{http://pagesperso.ls2n.fr/~kermorgant-o/student links.php}{portal on my website}
 
 \section{The robots}
+
+\def\wMe{{}^w\M_e}
 
 Three robots are proposed with increasing complexity. You should start with the Turret, then the Kuka KR16 then the UR-10.\\
 For each of these robots, the table of Modified Denavit-Hartenberg parameters should be defined. As we saw during the lectures, once you have the table then the Direct Geometric and Direct Kinematic Models can be almost automatically derived. A tool is provided in this package to generate C++ code for the Geometric and Kinematic models, see Appendix \ref{dhcode} for details on this tool.
 
-The robots are detailed in Appendix \ref{robots}. The fixed frame and the end-effector frames are imposed by the schematics. 
+The fixed frame and the end-effector frame are imposed by the schematics. 
 All intermediary frames have to be placed according to MDH convention, with a final fixed transform between the wrist and end-effector frames.
-
-\subsection{Running the simulation}
-
-Once everything is installed and compiled (see Appendix \ref{ros}), the base simulation can be run from a terminal (only 1 line depending on the robot you work on):
-\cppstyle
-\begin{lstlisting}
-roslaunch ecn_manip turret.launch
-roslaunch ecn_manip kr16.launch
-roslaunch ecn_manip ur10.launch
-\end{lstlisting}
-
-\subsection{Direct Geometric Model}
-
-\def\eMw{{}^e\M_w}
-
-The first part is to build the direct geometric model, depending on the current value of $\q$. This is to be done in two functions:
-\begin{itemize}
-	\item \texttt{Robot::init\_wMe()} where you have to write the constant matrix $\eMw$ from the end-effector to the wrist frame
-	\item \texttt{Robot::fMw(q)}  where you have to write and return the transform $\M$ between the fixed and wrist frame
-\end{itemize}
-
-\section{Building the models}
-
-
-
-
-\appendix
-
-
-\section{How to load the C++ project inside Qt Creator}\label{ros}
-
-An actual ROS course will be held in the second semester, for now just configure as follows.\\
-You should have a folder named \texttt{ros} in your home directory. Open a terminal inside and follow these steps:
-\begin{enumerate}
-	\item Clone this project inside  \texttt{ros/src}
-	\begin{center}\cppstyle
-		\begin{lstlisting}
-		cd ~/ros
-		mkdir src
-		cd src
-		git clone https://github.com/oKermorgant/ecn_manip.git
-		\end{lstlisting}
-	\end{center}
-	\item Compile using catkin (you'll discover soon enough what it is) : \texttt{catkin build}
-	\item Run Qt Creator from the top icon
-	\item Load the \texttt{ros/src/ecn\_manip/CMakeLists.txt} file through \texttt{File...open project}
-	\item QtCreator asks for a compilation folder: give \texttt{ros/build/ecn\_manip}
-	\item The files should be displayed and ready to compile and run
-	\item Compilation is done by clicking the bottom-left hammer
-	\item Run your program with the green triangle. It can be stopped by clicking on the red square
-	
-\end{enumerate}
-
-\section{Robots to be modeled}\label{robots}
-
 
 \subsection{Turret RRP robot}
 
 \begin{minipage}{.8\linewidth}
 	This is a very simple robot to begin the modeling, as shown in the figure.\\
 	The fixed frame $\Frame{0}$ and end-effector frame $\Frame{e}$ are imposed, as well as the joint direction.\\
-	The constant values for this model are: $b = 0.5$ m and $d = 0.1$ m.	
+	The constant values for this model are: $b = 0.5$ m and $d = 0.1$ m.\\~\\
+	All computation may be done first without using the Denavit-Hartenberg parameters as the robot is quite simple. 
 \end{minipage}
 \begin{minipage}{.2\linewidth}
 	\includegraphics{fig/turret}\label{turret}
@@ -119,8 +82,82 @@ This robot is a classical 6R architecture with a spherical wrist, as shown in th
 	\caption{Model of the Kuka KR16 with imposed fixed and end-effector frames}
 \end{figure}
 
+The wrist frame is typically at the common point between joints 4, 5 and 6.
+The constant transform $\wMe$ between the wrist and the end-effector should thus include the $0.158$ distance and potential rotations.
+
+\subsection{Running the simulation}
+
+Once everything is installed and compiled, the base simulation can be run from a terminal (only 1 line depending on the robot you work on):
+\cppstyle
+\begin{lstlisting}
+roslaunch ecn_manip turret.launch
+roslaunch ecn_manip kr16.launch
+roslaunch ecn_manip ur10.launch
+\end{lstlisting}
+
+
+\section{Building the models}
+
+\subsection*{The main code}
+
+In the file \texttt{control.cpp}, the switch-case block corresponds to the 6 exercises to be done for each robot. Note that if they work for the Turret robot, then 
+they should work for all robots as long as the model is correct. \\
+The current exercise is changed by using the buttons in the GUI.
+
+\subsection*{Exercise 1: Checking the Direct Geometric Model}
+
+In this exercise, the robot follows the manually given joint positions. The task is to build and print the direct geometric model, depending on the current value of $\q$. This is to be done in two functions:
+\begin{itemize}
+	\item \texttt{Robot::init\_wMe()} where you have to write the constant matrix $\wMe$ from the end-effector to the wrist frame
+	\item \texttt{Robot::fMw(q)}  where you have to write and return the transform $\M$ between the fixed and wrist frame
+\end{itemize}
+Once you have computed the \texttt{M} matrix, the code calls \texttt{robot->checkPose(M);} in order to print both your matrix and the true one. No need to tell that they should be equal.\\
+What can be told is that it is useless to continue until they are.
+
+\subsection*{Exercise 2: Checking the Direct Kinematic Model (Jacobian)}
+
+If you select \texttt{Manual Operational Velocity} in the GUI then the sliders allow you to give a desired operational velocity (ie twist) for the end-effector.\\
+The robot Jacobian has to be defined in the function \texttt{Robot::fJw(q)} that should return the Jacobian of the wrist in the fixed frame.\\
+
+In the main code, the commanded velocity has then to be mapped to the joint velocity through the robot Jacobian: \texttt{vCommand = robot->fJe(q).pseudoInverse()*v;}\\
+You can check that the end-effector is able to follow straight 3D lines in x, y or z direction. Similarly, it should be able to rotate around x, y or z. This means the Jacobian computation is correct.
+
+\subsection*{Exercise 3: Checking the Inverse Geometric Model}
+
+If you select \texttt{Direct point-to-point} in the GUI then the robot will receive two operational setpoints, at a given sampling time that can be changed with the \texttt{Switching time} slider in the GUI. The current setpoint is in the matrix \texttt{Md} and its corresponding joint position is in the vector \texttt{qf}. 
+
+Nothing has to be done in the main code, but of course the \texttt{Robot::inverseGeometry(M)} function has to be filled in order to compute the actual inverse geometry solution.
+
+\subsection*{Exercise 4: Interpolated point-to-point control}
+
+\subsection*{Exercise 5: Inverse Geometric Model and trajectory tracking}
+
+\subsection*{Exercise 6: Operational control through Jacobian}
+
+
+
+
+
+
+\appendix
+
+
 \newpage
+
 \section{Using ViSP}\label{visp}
+
+ViSP is a library for Visual Servoing (wait for the M2 Robotics to know more!) and also includes all necessary tools to play with mathematical vectors, matrices and 3D transforms.
+The full documentation is here: \link{http://visp-doc.inria.fr/doxygen/visp-3.1.0/classes.html}{http://visp-doc.inria.fr/doxygen/visp-3.1.0/classes.html}.\\
+The main classes to be used are:
+\begin{itemize}
+	\item \texttt{vpMatrix}: a classical matrix of given dimensions, can be multiplied with other matrices and vectors if the dimensions are ok. The pseudo-inverse of matrix \texttt{M} 
+	is available with \texttt{M.pseudoInverse()}
+	\item \texttt{vpColVector}: a column vector of given dimension
+	\item \texttt{vpHomogeneousMatrix}: the classical $4\times 4$ 3D transform matrix
+\end{itemize}
+Most of the model computation is about initializing a matrix or vector to correct dimensions (which is already done) and fill its elements with formulae.\\
+To write 1 at element (i,j) of matrix M, just write \texttt{M[i][j] = 1;}\\
+Similarly, to write 1 at element (i) of vector q, just write \texttt{q[i] = 1;}
 
 
 \newpage
@@ -128,7 +165,7 @@ This robot is a classical 6R architecture with a spherical wrist, as shown in th
 
 The core of robot modeling is to build the MDH table. From this, the DGM and KM can be derived automatically. The Inverse Geometry still has to be done by hand (even if some advanced tools allow code-generation for the IG resolution).
 
-As it is quite tedious to have to recompute all matrices when a solution of MDH is investigated, a tool is provided to generate the C++ code. An example can be found in the file \texttt{dh\_example.yml}:
+As it is quite tedious to have to compute all matrices when a solution of MDH is investigated, a tool is provided to generate the C++ code. An example can be found in the file \texttt{dh\_example.yml}:
 \cppstyle
 \begin{lstlisting}
 notation: [alpha, a, theta, r]

@@ -20,14 +20,15 @@ Robot::Robot(const urdf::Model &model, double rate)
     t_gt = 0;
 
     // init joints
-    v_max_.clear();
+
+    std::vector<double> v_max_vec;
     q_max.clear();
     q_min.clear();
     dofs = 0;
     joint_cmd.name.clear();
 
     // find tree from base_link to tool0
-    std::string cur_link = "tool0";
+    std::string cur_link = "tool0";    
     while(cur_link != "base_link")
     {
         for(const auto &joint_it : model.joints_)
@@ -38,7 +39,7 @@ Robot::Robot(const urdf::Model &model, double rate)
                 if(joint->type != urdf::Joint::FIXED)
                 {
                     joint_cmd.name.push_back(joint->name);
-                    v_max_.push_back(joint->limits->velocity);
+                    v_max_vec.push_back(joint->limits->velocity);
                     q_max.push_back(joint->limits->upper);
                     q_min.push_back(joint->limits->lower);
                     dofs += 1;
@@ -50,7 +51,10 @@ Robot::Robot(const urdf::Model &model, double rate)
     std::reverse(joint_cmd.name.begin(), joint_cmd.name.end());
     std::reverse(q_max.begin(), q_max.end());
     std::reverse(q_min.begin(), q_min.end());
-    std::reverse(v_max_.begin(), v_max_.end());
+    v_max_.resize(dofs);
+    std::reverse(v_max_vec.begin(), v_max_vec.end());
+    for(unsigned int i = 0; i < dofs; ++i)
+        v_max_[i] = v_max_vec[i];
     cout << "Found robot description: " << model.getName() << " with " << dofs << " DOFs" << endl;
 
     q_.resize(dofs);
@@ -72,15 +76,14 @@ Robot::Robot(const urdf::Model &model, double rate)
 
 void Robot::checkPose(const vpHomogeneousMatrix &M)
 {
+    displayFrame(M);
     if(ros::Time::now().toSec() - t_gt > 1)
     {
         t_gt = ros::Time::now().toSec();
         // passed transform
         vpRxyzVector rot(M.getRotationMatrix());
         std::cout << "Computed:     t = " << M.getTranslationVector().t() <<
-                     " / RPY = " << rot.t() << std::endl;
-
-        displayFrame(M);
+                     " / RPY = " << rot.t() << std::endl;        
 
         // check with simulation
         if(tfBuffer->canTransform("base_link", "tool0", ros::Time(0)))

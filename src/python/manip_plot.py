@@ -4,6 +4,8 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import rospy
 from tf import TransformListener
 from std_msgs.msg import Float32MultiArray
+from sensor_msgs.msg import JointState
+import xml.dom.minidom
 
 class AxisFig:
     
@@ -82,7 +84,7 @@ class Plotter:
         self.canvas = FigureCanvas(self.fig)
         
         self.tl = TransformListener()
-        self.des_sub = rospy.Subscriber('desired_pose', Float32MultiArray, self.des_pose_cb)
+        self.des_sub = rospy.Subscriber('/desired_pose', Float32MultiArray, self.des_pose_cb)
         self.des_pose = []
         
     def des_pose_cb(self, msg):
@@ -118,3 +120,93 @@ class Plotter:
                 
             rospy.sleep(0.1)
                 
+class JointPlotter:
+    def __init__(self):
+        
+        # init figure
+        self.fig = pp.figure()
+        self.ax = self.fig.add_subplot(111)
+        self.ax.set_ylim(-0.05, 1.05)
+        self.ax.set_yticks([0,1])
+        self.ax.set_yticklabels(['lower limit','upper limit'])
+        self.line = []
+        self.t0 = 0  
+        self.tjs = 0
+        self.fig.tight_layout()
+        self.canvas = FigureCanvas(self.fig)
+        
+        # get joint names and limits
+        self.n = self.init_urdf()
+
+        # subscriber and message history
+        self.js_sub = rospy.Subscriber('/joint_states', JointState, self.joint_callback)
+        self.t = []
+        self.data = [[] for i in xrange(self.n)]
+        
+    def init_urdf(self):
+ 
+        robot = xml.dom.minidom.parseString(rospy.get_param('/robot_description'))        
+        robot = robot.getElementsByTagName('robot')[0]
+        self.names = []
+        self.qmin = []
+        self.qmax = []
+                
+        # Find all non-fixed joints
+        for child in robot.childNodes:
+            if child.nodeType is child.TEXT_NODE:
+                continue
+            if child.localName == 'joint':
+                jtype = child.getAttribute('type')
+                if jtype == 'fixed' or jtype == 'floating':
+                    continue
+                name = child.getAttribute('name')
+                limit = child.getElementsByTagName('limit')[0]
+                self.names.append(name)
+                self.qmin.append(float(limit.getAttribute('lower')))
+                self.qmax.append(float(limit.getAttribute('upper')))                
+                self.line.append(self.ax.plot([], [], lw=2, label=name)[0])
+                
+        self.line.append(self.ax.plot([], [], 'k--', lw=2)[0])
+        self.line.append(self.ax.plot([], [], 'k--', lw=2)[0])
+        self.ax.legend(loc='center left')
+        
+        return len(self.names)
+                        
+    def joint_callback(self, msg):
+        
+        t = rospy.Time.now().to_sec()
+        if self.t0 == 0:
+            self.t0 = t
+        
+        if t - self.tjs > 0.1:
+            # perform update
+            self.tjs = t
+                     
+            # append
+            self.t.append(t-self.t0)
+            for i,name in enumerate(msg.name):
+                if name in self.names:
+                    j = self.names.index(name)
+                    self.data[j].append((msg.position[i] - self.qmin[j])/(self.qmax[j] - self.qmin[j]))
+            
+            # clean
+            for idx in xrange(len(self.t)):
+                if self.t[-1] - self.t[idx] < 10:
+                    break
+            self.t = self.t[idx:]
+                        
+            for i in xrange(self.n):
+                self.data[i] = self.data[i][idx:]
+                self.line[i].set_data(self.t, self.data[i])
+            self.line[i+1].set_data([self.t[0],self.t[-1]], [0,0])
+            self.line[i+2].set_data([self.t[0],self.t[-1]], [1,1])
+                        
+            # update time scrolling
+            if len(self.t) > 10:                
+                self.ax.set_xlim(self.t[0], self.t[-1])                
+            
+            self.canvas.draw()        
+                
+                
+            
+            
