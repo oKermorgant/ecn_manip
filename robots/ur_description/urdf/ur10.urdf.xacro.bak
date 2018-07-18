@@ -317,20 +317,9 @@
     </joint>
 
     <!-- Frame coincident with all-zeros TCP on UR controller -->
-    <link name="${prefix}tool0">
-      <visual>
-        <origin xyz="0.0 0.0 -0.05"/>
-        <geometry>
-          <cylinder radius="0.003" length="0.14"/>
-        </geometry>
-        <material name="LightGrey">
-          <color rgba="0.4 0.4 0.4 1.0"/>
-        </material>
-      </visual>      
-    </link>
-    
+    <link name="${prefix}tool0"/>
     <joint name="${prefix}wrist_3_link-tool0_fixed_joint" type="fixed">
-      <origin xyz="0 ${wrist_3_length+0.1} 0" rpy="${pi/-2.0} 0 0"/>
+      <origin xyz="0 ${wrist_3_length} 0" rpy="${pi/-2.0} 0 0"/>
       <parent link="${prefix}wrist_3_link"/>
       <child link="${prefix}tool0"/>
     </joint>

@@ -7,6 +7,8 @@
 #include <robot_ur10.h>
 #include <urdf/model.h>
 #include <stdexcept>
+#include <visp/vpSubMatrix.h>
+#include <visp/vpSubColVector.h>
 
 vpColVector operator-(const vpPoseVector &p1, const vpPoseVector &p2)
 {
@@ -18,6 +20,19 @@ vpColVector operator-(const vpPoseVector &p1, const vpPoseVector &p2)
 
 namespace ecn
 {
+
+void putAt(vpMatrix &_J, const vpMatrix &_Jsub, const unsigned int r, const unsigned int c)
+{
+    vpSubMatrix Js(_J, r, c, _Jsub.getRows(), _Jsub.getCols());
+    Js = _Jsub;
+}
+
+// put a vector inside another
+void putAt(vpColVector &_e, const vpColVector &_esub, const unsigned int r)
+{
+    vpSubColVector es(_e, r, _esub.getRows());
+    es = _esub;
+}
 
 
 std::unique_ptr<ecn::Robot> initRobot(int argc, char ** argv, double rate = 100)

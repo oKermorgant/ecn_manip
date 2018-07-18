@@ -83,8 +83,22 @@ This robot is a classical 6R architecture with a spherical wrist, as shown in th
 \end{figure}
 
 The wrist frame is typically at the common point between joints 4, 5 and 6.
-The constant transform $\wMe$ between the wrist and the end-effector should thus include the $0.158$ distance and potential rotations.
+The constant transform $\wMe$ between the wrist and the end-effector should include the $0.158$ distance and potential rotations.
 
+\subsection{Universal Robot UR-10 anthropomorphic robot}
+
+This robot is a less classical 6R architecture, without spherical wrist. A tool is also attached with an arbitrary end-effector offset.
+
+\begin{figure}[h!]\centering
+	\includegraphics[width=.6\linewidth]{fig/ur10}
+	\caption{Model of the UR-10 with imposed fixed and end-effector frames}
+\end{figure}
+
+The Inverse Geometry is given for this robot. 
+The constant transform $\wMe$ between the wrist and the end-effector should include the $0.1922$ distance and potential rotations.
+
+
+\newpage
 \subsection{Running the simulation}
 
 Once everything is installed and compiled, the base simulation can be run from a terminal (only 1 line depending on the robot you work on):
@@ -129,23 +143,35 @@ What can be told is that it is useless to continue until they are.
 \subsection*{Exercise 2: Checking the Direct Kinematic Model (Jacobian)}
 
 If you select \texttt{Manual Operational Velocity} in the GUI then the sliders allow you to give a desired operational velocity (ie twist) for the end-effector.\\
+This velocity is ${}^e\mathbf{v}_e$ and is defined in the end-effector frame.\\
 The robot Jacobian has to be defined in the function \texttt{Robot::fJw(q)} that should return the Jacobian of the wrist in the fixed frame.\\
 
-In the main code, the commanded velocity has then to be mapped to the joint velocity through the robot Jacobian: \texttt{vCommand = robot->fJe(q).pseudoInverse()*v;}\\
-You can check that the end-effector is able to follow straight 3D lines in x, y or z direction. Similarly, it should be able to rotate around x, y or z. This means the Jacobian computation is correct.
 
+In the main code, the commanded velocity then to be mapped to the joint velocity in two steps:
+\begin{enumerate}
+	\item Map to the fixed frame: ${}^f\mathbf{v}_e = \left[\begin{array}{cc}{}^f\R_e & 0 \\ 0 & {}^f\R_e\end{array}\right]{}^e\mathbf{v}_e$\\
+			Call \texttt{M.getRotationMatrix()} to get this rotation.\\
+			The \texttt{ecn::putAt} function may be of good use.
+	\item Map to the joint space: $\dot\q = \J^+.{}^f\mathbf{v}_e$\\
+Call \texttt{robot->fJe(q).pseudoInverse()} to get the Jacobian pseudo-inverse
+\end{enumerate}
+You can check that the end-effector is able to follow straight 3D lines in x, y or z direction in its own frame.
+Similarly, it should be able to rotate around x, y or z. This means the Jacobian computation is correct.
+
+\newpage
 \subsection*{Exercise 3: Checking the Inverse Geometric Model}
 
 If you select \texttt{Direct point-to-point} in the GUI then the robot will receive two operational setpoints, at a given sampling time that can be changed with the \texttt{Switching time} slider in the GUI. The current setpoint is in the matrix \texttt{Md} and its corresponding joint position is in the vector \texttt{qf}. 
 
-Nothing has to be done in the main code, but of course the \texttt{Robot::inverseGeometry(M)} function has to be filled in order to compute the actual inverse geometry solution. the robot will try to have all joints reach their desired value as soon as possible, which will lead to a discontinuous motion.\\
+Nothing has to be done in the main code, but of course the \texttt{Robot::inverseGeometry(M)} function has to be filled in order to compute the actual inverse geometry solution. The robot will try to have all joints reach their desired value as soon as possible, which will lead to a discontinuous motion.\\
 
-In practice, this exercise is to check that the Inverse Geometric Model is correct: the robot should reach the desired pose.
+In practice, this exercise is to check that the Inverse Geometric Model is correct: the robot should reach the desired pose.\\
+
+When computing the inverse geometry, try to find a solution as near as possible to the passed \texttt{q0}. It should also be within the joint limits, that are available in \texttt{q\_min\_} and \texttt{q\_max\_}.
 
 \subsection*{Exercise 4: Interpolated point-to-point control}
 
-If you select \texttt{Interpolated point-to-point} in the GUI then the robot still receives two operational setpoints.
-The final setpoint is \texttt{Md} and its corresponding joint position is in the vector \texttt{qf}. The previous setpoint is \texttt{M0} and its corresponding joint position is in the vector \texttt{q0}. Those joint positions come from the inverse geometry and should be correct at this point.\\
+In this exercise the previous pose setpoint \texttt{M0} and its corresponding joint position \texttt{q0} should be used to interpolate the joint positions.\\
 
 Here the goal is to compute the current setpoint $\q_c = \q_0 + p(t)(\q_f-\q_0)$. The interpolation function $p(t)$ was defined during the lectures and should take into account the maximum joint velocity and acceleration that are stored in the \texttt{vMax} and \texttt{aMax} vectors. Basically this amounts to computing the minimum time \texttt{tf} needed to reach $\q_f$ from $\q_0$. This computation should be done in the \texttt{if(robot->newRef())} and then used to compute the current \texttt{qCommand}.
 
@@ -161,11 +187,22 @@ The \texttt{robot->intermediaryPose(M0, Md, alpha)} function returns a pose betw
 
 Then, the inverse geometry of this pose should be sent to the robot as joint position setpoint.
 
-
+\newpage
 \subsection*{Exercise 6: Operational control through Jacobian}
 
+In this exercise the goal is still to follow a straight line between the two points, but this time by sending a joint velocity command.\\
 
-
+As seen in class, this command should make the end-effector approach its desired pose. The steps are:
+\begin{enumerate}
+	\item Compute the pose error in the desired frame: ${}^{e*}\M_e = {}^{f}\M_{e*}^{-1}.{}^{f}\M_e$
+	\begin{itemize}
+		\item in the code, ${}^{f}\M_{e*}$ corresponds to \texttt{Md} and ${}^{f}\M_e$ to \texttt{M} 
+		\item In practice we use the $(\mathbf{t}, \theta\u)$ representation with \texttt{p.buildFrom()}
+	\end{itemize}
+	\item Compute the desired linear and angular velocities: $v = -\lambda{}^{f}\M_{e*}\mathbf{t}$, \quad $\omega = -\lambda{}^{f}\M_{e} (\theta\u)$
+	\item Map these velocities to the joint space: $\dot\q = \J^+ \left[\begin{array}{c}v\\\omega\end{array}\right]$
+\end{enumerate}
+$\lambda$ is a gain that can be changed from the GUI. Increasing it will lead to a faster convergence. It can be obtained through \texttt{robot->lambda()}.
 
 
 
@@ -187,7 +224,36 @@ The main classes to be used are:
 \end{itemize}
 Most of the model computation is about initializing a matrix or vector to correct dimensions (which is already done) and fill its elements with formulae.\\
 To write 1 at element (i,j) of matrix M, just write \texttt{M[i][j] = 1;}\\
-Similarly, to write 1 at element (i) of vector q, just write \texttt{q[i] = 1;}
+Similarly, to write 1 at element (i) of vector q, just write \texttt{q[i] = 1;}\\
+
+3D transforms can be easily changed between homogeneous matrix, rotation matrix, translation vector or $\theta\u$ vector. Another type called a pose vector
+consists in the full $(\mathbf{t}, \theta\u)$ vector of dimension 6:
+\cppstyle
+\begin{lstlisting}
+vpHomogeneousMatrix M;
+vpPoseVector p;
+vpRotationMatrix R;
+vpTranslationVector t;
+vpColVector tu(3);
+
+M.getRotationMatrix()*t;	// extract the rotation part from M and multiply with t
+p.buildFrom(M);			// build (t, theta-u) from M
+t = M.getTranslationVector();	// extract the translation part
+
+// copy the theta-u part of p into tu
+for(int i = 0; i < 3; ++i)
+	tu[i] = p[i+3];
+	
+// compute inverse transform
+M = M.inverse();
+\end{lstlisting}
+
+Two utility functions are provided to put a matrix or vector into a bigger one:
+\begin{itemize}
+	\item \texttt{void ecn::putAt(M, Ms, r, c)}: Writes matrix \texttt{Ms} inside matrix \texttt{M}, starting from given row and column.
+	\item \texttt{void ecn::putAt(V, Vs, r)}: Writes column vector \texttt{Vs} inside vector \texttt{V}, starting from given row. These two functions do nothing but print an error
+	if the submatrix or vector does not fit in the main one.
+\end{itemize}
 
 
 \newpage

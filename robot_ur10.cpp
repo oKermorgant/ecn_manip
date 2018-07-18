@@ -8,7 +8,7 @@ void ecn::RobotUR10::init_wMe()
 
 }
 
-// Direct Kinematics
+// Direct Geometry
 vpHomogeneousMatrix ecn::RobotUR10::fMw(const vpColVector &q) const
 {
     vpHomogeneousMatrix M;
@@ -18,7 +18,7 @@ vpHomogeneousMatrix ecn::RobotUR10::fMw(const vpColVector &q) const
 }
 
 
-// Inverse Kinematics is already given for this robot
+// Inverse Geometry is already given for this robot
 
 
 // Wrist Jacobian
