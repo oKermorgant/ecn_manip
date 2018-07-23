@@ -26,7 +26,7 @@ from tf.transformations import quaternion_from_matrix
 X = sympy.Matrix([1,0,0]).reshape(3,1)
 Y = sympy.Matrix([0,1,0]).reshape(3,1)
 Z = sympy.Matrix([0,0,1]).reshape(3,1)
-
+Z4 = sympy.Matrix([0,0,0,1]).reshape(4,1)
 cst_symb = {}
 
 def sk(u):
@@ -322,7 +322,7 @@ def replaceFctQ(s, cDef, cUse, q = 'q'):
     Replace cos and sin functions of q_i with precomputed constants
     '''
     fctList = ('cos', 'sin')
-    pmDict = {'+':'p', '-':'m'}
+    pmDict = {'+':'', '-':'m'}
     defCount = len(cDef)
     # replace with all expressions already found
     for sf in cUse:

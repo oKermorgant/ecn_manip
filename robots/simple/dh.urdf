@@ -1,0 +1,130 @@
+<?xml version="1.0"?>
+<robot name="rrrp">
+<material name="matbase">
+        <color rgba="1 1 1 1"/>
+      </material>
+ <material name="mat3">
+        <color rgba="1 1 1 1"/>
+      </material>
+ <material name="mat2">
+        <color rgba=".8 0 0 1"/>
+      </material>
+ <material name="mat1">
+        <color rgba=".0 0 0 1"/>
+      </material>
+ <material name="mat4">
+        <color rgba=".0 0 0 1"/>
+      </material>
+
+<!-- Links -->
+  <link name="base_link">
+	   <inertial>
+      <origin xyz="2 0 0" /> 
+      <mass value="1.0" />
+      <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="100.0"  iyz="0.0"  izz="1.0" />
+    </inertial>
+    <visual>
+        <origin xyz="0 0 0.1" rpy="0 0 0" />
+      <geometry>
+        <cylinder length="0.2" radius="0.05"/>
+      </geometry>
+ <material name="matbase"/>
+    </visual>
+ <collision>
+        <origin xyz="0 0 0.1" rpy="0 0 0" />
+      <geometry>
+        <cylinder length="0.2" radius="0.05"/>
+      </geometry>
+ <material name="mat1"/>
+    </collision>
+  </link>
+
+<link name="link1">
+	 <inertial>
+      <origin xyz="2 0 0" /> 
+      <mass value="1.0" />
+      <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="100.0"  iyz="0.0"  izz="1.0" />
+    </inertial>
+<visual>
+<geometry>
+        <cylinder length="0.05" radius="0.04"/>
+</geometry>
+ <material name="mat1"/>
+    </visual>
+</link>
+
+<link name="link2">
+	 <inertial>
+      <origin xyz="2 0 0" /> 
+      <mass value="1.0" />
+      <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="100.0"  iyz="0.0"  izz="1.0" />
+    </inertial>
+<visual>
+<geometry>
+        <cylinder length="0.04" radius="0.03"/>
+</geometry>
+ <material name="mat2"/>
+    </visual>
+</link>
+
+<link name="link3">
+	 <inertial>
+      <origin xyz="2 0 0" /> 
+      <mass value="1.0" />
+      <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="100.0"  iyz="0.0"  izz="1.0" />
+    </inertial>
+<visual>
+        <origin xyz="0 0 -.03" rpy="0 0 0" />
+<geometry>
+        <cylinder length="0.06" radius="0.012"/>
+</geometry>
+ <material name="mat3"/>
+    </visual>
+</link>
+
+
+<link name="link4">
+<visual>
+        <origin xyz="0 0 -0.005" rpy="0 0 0" />
+<geometry>
+        <cylinder length="0.15" radius="0.004"/>
+</geometry>
+ <material name="mat4"/>
+    </visual>
+</link>
+
+	<joint name="theta" type="revolute">
+    	<limit lower="-3" upper="3" effort="10" velocity="3" />
+    <dynamics damping="0.0" friction="0.0"/>
+    	<parent link="base_link" />
+    	<child link="link1" />
+    	<axis xyz="0 0 1" />
+	</joint>
+
+	<joint name="d" type="prismatic">
+    	<limit lower="-1.04" upper="1.04" effort="10" velocity="3" />
+    <dynamics damping="0.0" friction="0.0"/>
+    	<parent link="link1" />
+    	<child link="link2" />
+    	<axis xyz="0 0 1" />
+	</joint>
+    
+	<joint name="alpha" type="revolute">
+    	<limit lower="-4" upper="4" effort="10" velocity="3" />
+	<dynamics damping="0.0" friction="0.0"/>
+    	<parent link="link2" />
+    	<child link="link3" />
+    	<axis xyz="1 0 0" />
+	</joint>
+
+	<joint name="a" type="prismatic">
+    	<limit lower="-1.5707963267948" upper="1.5707963267948" effort="10" velocity="3" />
+	<dynamics damping="0.0" friction="0.0"/>
+    	<parent link="link3" />
+    	<child link="link4" />
+    	<axis xyz="1 0 0" />
+	</joint>
+
+
+
+</robot>

@@ -56,6 +56,19 @@ public:
     // set articular velocity
     void setJointVelocity(const vpColVector &_velocity);
 
+    bool inJointLimits(double &qi, const int i) const
+    {
+        for(double offset: {0., -2*M_PI, 2*M_PI})
+        {
+            if(qi + offset > q_min[i] && qi + offset < q_max[i])
+            {
+                qi += offset;
+                return true;
+            }
+        }
+        return false;
+    }
+
     // get joint limits
     vpColVector jointMin() const {return q_min;}
     vpColVector jointMax() const  {return q_max;}

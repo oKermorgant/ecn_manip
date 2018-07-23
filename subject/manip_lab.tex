@@ -143,7 +143,7 @@ What can be told is that it is useless to continue until they are.
 \subsection*{Exercise 2: Checking the Direct Kinematic Model (Jacobian)}
 
 If you select \texttt{Manual Operational Velocity} in the GUI then the sliders allow you to give a desired operational velocity (ie twist) for the end-effector.\\
-This velocity is ${}^e\mathbf{v}_e$ and is defined in the end-effector frame.\\
+This velocity is ${}^e\v_e$ and is defined in the end-effector frame.\\
 The robot Jacobian has to be defined in the function \texttt{Robot::fJw(q)} that should return the Jacobian of the wrist in the fixed frame.\\
 
 
@@ -167,7 +167,9 @@ Nothing has to be done in the main code, but of course the \texttt{Robot::invers
 
 In practice, this exercise is to check that the Inverse Geometric Model is correct: the robot should reach the desired pose.\\
 
-When computing the inverse geometry, try to find a solution as near as possible to the passed \texttt{q0}. It should also be within the joint limits, that are available in \texttt{q\_min\_} and \texttt{q\_max\_}.
+When computing the inverse geometry, try to find a solution as near as possible to the passed \texttt{q0}. It should also be within the joint limits, that are available in \texttt{q\_min} and \texttt{q\_max}.\\
+
+The function \texttt{inJointLimits(qi, i)} tries to update \texttt{qi} with $\pm 2\pi$ so that it is within the bounds for joint \texttt{i}. It returns \texttt{false} if no solution was found.
 
 \subsection*{Exercise 4: Interpolated point-to-point control}
 

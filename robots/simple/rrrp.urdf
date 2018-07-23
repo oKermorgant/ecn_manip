@@ -140,9 +140,8 @@
 
 
 <link name="link4">
-
 <visual>
-        <origin xyz="0 0 -0.075" rpy="0 0 0" />
+        <origin xyz="0 0 -0.005" rpy="0 0 0" />
 <geometry>
         <cylinder length="0.15" radius="0.004"/>
 </geometry>
@@ -150,7 +149,7 @@
     </visual>
 </link>
 
-<link name="end_effector">
+<link name="tool0">
 
 <visual>
         <origin xyz="0 0 .001" rpy="0 0 0" />
@@ -199,7 +198,7 @@
     	<origin xyz="0.0 0 0.0" rpy="0 0 0" />
 	</joint>
 
-	<joint name="joint3" type="fixed">
+	<joint name="joint3" type="revolute">
     	<limit lower="-1.5707963267948" upper="1.5707963267948" effort="10" velocity="3" />
     <dynamics damping="0.0" friction="0.0"/>
     	<parent link="link2" />
@@ -219,14 +218,14 @@
     <dynamics damping="0.0" friction="0.0"/>
     	<parent link="link3" />
     	<child link="link4" />
-    	<origin xyz="0. -0.07 0.0" rpy="1.5707963267948 0 0" />
+    	<origin xyz="0. 0 0.0" rpy="1.5707963267948 0 0" />
     	<axis xyz="0 0 1" />
 	</joint>
 
 	<joint name="link4_2" type="fixed">
     	<parent link="link4" />
-    	<child link="end_effector" />
-    	<origin xyz="0.0 0 0.0" rpy="0 0 0" />
+    	<child link="tool0" />
+    	<origin xyz="0.0 0.0 0.07" rpy="0 0 0" />
 	</joint>
 
 </robot>
