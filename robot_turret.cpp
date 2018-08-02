@@ -1,4 +1,5 @@
 #include <robot_turret.h>
+#include <trig_solvers.h>
 
 // Model of Turret robot
 

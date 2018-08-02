@@ -149,10 +149,10 @@ The robot Jacobian has to be defined in the function \texttt{Robot::fJw(q)} that
 
 In the main code, the commanded velocity then to be mapped to the joint velocity in two steps:
 \begin{enumerate}
-	\item Map to the fixed frame: ${}^f\mathbf{v}_e = \left[\begin{array}{cc}{}^f\R_e & 0 \\ 0 & {}^f\R_e\end{array}\right]{}^e\mathbf{v}_e$\\
+	\item Map to the fixed frame: ${}^f\mathbf{v}_e^* = \left[\begin{array}{cc}{}^f\R_e & 0 \\ 0 & {}^f\R_e\end{array}\right]{}^e\mathbf{v}_e^*$\\
 			Call \texttt{M.getRotationMatrix()} to get this rotation.\\
 			The \texttt{ecn::putAt} function may be of good use.
-	\item Map to the joint space: $\dot\q = \J^+.{}^f\mathbf{v}_e$\\
+	\item Map to the joint space: $\dot\q = \J^+.{}^f\mathbf{v}_e^*$\\
 Call \texttt{robot->fJe(q).pseudoInverse()} to get the Jacobian pseudo-inverse
 \end{enumerate}
 You can check that the end-effector is able to follow straight 3D lines in x, y or z direction in its own frame.
@@ -169,7 +169,7 @@ In practice, this exercise is to check that the Inverse Geometric Model is corre
 
 When computing the inverse geometry, try to find a solution as near as possible to the passed \texttt{q0}. It should also be within the joint limits, that are available in \texttt{q\_min} and \texttt{q\_max}.\\
 
-The function \texttt{inJointLimits(qi, i)} tries to update \texttt{qi} with $\pm 2\pi$ so that it is within the bounds for joint \texttt{i}. It returns \texttt{false} if no solution was found.
+Many useful functions are available to solve classical trigonometric equations. They are detailed in Appendix \ref{trigsolve}.
 
 \subsection*{Exercise 4: Interpolated point-to-point control}
 
@@ -345,10 +345,82 @@ J[5][2] = 1.;
 \end{minipage}
 This is exactly what you would get by doing the manual computation from the initial table, which I hope is quite appreciated.
 
+\newpage
+\section{Trigonometric solvers}\label{trigsolve}
 
+The code contains solvers for all types of trigonometric equations (except type 1 that is obvious).\\
+They take as argument the coefficients of the equations and also the joint limits in order to prune impossible solutions. They return:
+\begin{itemize}
+	\item A \texttt{std::vector<double>} for equations of 1 unknown (types 2 \& 3).\\We can go through the valid solutions with:
+\cppstyle
+	\begin{lstlisting}
+// assume q1 should ensure type 2: X.sin(q1) + Y.cos(q1) = Z
 
+for(double q1: solveType2(X, Y, Z, q_min[0], q_max[0]))
+{
+	// here q1 is a valid solution, may be used to deduce other joint values
+}
+	\end{lstlisting}
+	\item A \texttt{std::vector<JointSolution>} for equations of 2 unknowns (types 4 to 8).\\In this case, the valid solutions can be explored with:
+	\cppstyle
+	\begin{lstlisting}
+// assume q1 and q2 should ensure type 6 equation: 
+//		W.sin(q2) = X.cos(q1) + Y.sin(q1) - Z1
+//		W.cos(q2) = X.sin(q1) - Y.cos(q1) - Z1
 
+for(auto qs: solveType6(X, Y, Z1, Z2, W, q_min[0], q_max[0], q_min[1], q_max[1]))
+{
+	// here a (q1,q2) solution is available in qs.qi and qs.qj
+}
+	\end{lstlisting}
+\end{itemize}
 
+Additional functions can check and even update (by $\pm 2\pi$) an angular joint value to that is fits within the joint limits:
+\cppstyle
+\begin{lstlisting}
+// assume q1 was computed by hand, check joint limits
+if(inAngleLimits(q1, q_min[0], q_max[0]))
+{
+	// here q1 is ok
+}
+
+// we have the sinus s1 and cosinus c1 of q1
+if(inAngleLimits(q1, s1, c1, q_min[0], q_max[0]))
+{
+	// here q1 is ok and s1 and c1 absolute values are <= 1
+}
+\end{lstlisting}
+
+\newpage
+Below are listed the syntax for all trigonometric solvers:\\
+
+%\setlength\extrarowheight{5pt}
+\renewcommand{\arraystretch}{2.2}
+\begin{tabular}{|c|c|C{7cm}|C{2cm}|}\hline
+Type & Equation & Syntax & Returns (vector of)\\\hline
+1 & $Xq_i = Y$& does not exist &$q_i$	\\\hline		
+2 & $Xs_i+Yc_i = Z$ & \texttt{solveType2(x, y, z, q\_min, q\_max)}&$q_i$\\\hline
+3 & $\begin{array}{l}X_1s_i+Y_1c_i = Z_1 \\ X_2s_i+Y_2c_i = Z_2\end{array}$&\texttt{solveType3(x1, y1, z1,
+ x2, y2, z2,
+q\_min, q\_max)} &$q_i$\\\hline
+4 & $\begin{array}{l}X_1q_js_i = Y_1 \\ X_2q_jc_i = Y_2\end{array}$& \texttt{solveType4(x1, y1, x2, y2,
+ qi\_min, qi\_max,
+ qj\_min, qj\_max)}&$(q_i,q_j)$ \\\hline
+5 & $\begin{array}{l}X_1s_i = Y_1+Z_1q_j \\ X_2c_i = Y_2+Z_2q_j\end{array}$& \texttt{solveType5(x1, y1, z1,
+ x2, y2, z2,
+ qi\_min, qi\_max,
+ qj\_min, qj\_max)}&$(q_i,q_j)$\\\hline			
+6 & $\begin{array}{l}Ws_j = Xc_i + Ys_i+Z_1 \\ Wc_j = Xs_i - Yc_i+Z_2\end{array}$& \texttt{solveType6(x, y,
+ z1, z2, w,
+ qi\_min, qi\_max,
+ qj\_min, qj\_max)}&$(q_i,q_j)$\\\hline
+7 & $\begin{array}{l}W_1c_j +W_2s_j = Xc_i + Ys_i+Z_1 \\ W_1s_j -W_2c_j = Xs_i - Yc_i+Z_2\end{array}$& \texttt{solveType7(x, y, z1, z2, w1, w2,
+ qi\_min, qi\_max,
+ qj\_min, qj\_max)}&$(q_i,q_j)$\\\hline
+8 &$\begin{array}{l}Xc_i+Yc_{ij} =Z_1 \\ Xs_i+Ys_{ij} =Z_2\end{array}$ & \texttt{solveType8(x, y, z1, z2,
+ qi\_min, qi\_max,
+ qj\_min, qj\_max)}&$(q_i,q_j)$\\\hline
+\end{tabular}
 
 
 \end{document}
