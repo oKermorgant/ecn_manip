@@ -3,7 +3,7 @@
 
 // Model of Turret robot
 
-// Any constant transform at base of end-effector
+// Any constant transform at base or end-effector
 void ecn::RobotTurret::init_wMe()
 {
 
@@ -21,10 +21,10 @@ vpHomogeneousMatrix ecn::RobotTurret::fMw(const vpColVector &q) const
 // Inverse Geometry
 vpColVector ecn::RobotTurret::inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const
 {
-    vpColVector q(dofs);
 
 
-    return q;
+
+    return bestCandidate(q0);
 }
 
 // Wrist Jacobian

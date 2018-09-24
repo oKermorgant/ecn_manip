@@ -169,7 +169,9 @@ In practice, this exercise is to check that the Inverse Geometric Model is corre
 
 When computing the inverse geometry, try to find a solution as near as possible to the passed \texttt{q0}. It should also be within the joint limits, that are available in \texttt{q\_min} and \texttt{q\_max}.\\
 
-Many useful functions are available to solve classical trigonometric equations. They are detailed in Appendix \ref{trigsolve}.
+Many useful functions are available to solve classical trigonometric equations. They are detailed in Appendix \ref{trigsolve}.\\
+
+A given potential solution should be stored using \texttt{addCandidate(\{q1, q2, ..., qn\});}\\ At the end of the Inverse Geometry function, use \texttt{return bestCandidate(q0);} that will pick the candidate that is the nearest from the current joint position.
 
 \subsection*{Exercise 4: Interpolated point-to-point control}
 

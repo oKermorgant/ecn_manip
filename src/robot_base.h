@@ -111,6 +111,10 @@ public:
         br->sendTransform(buildTransformStamped(M, name));
     }
 
+    // inverse geometry methods
+    void addCandidate(std::vector<double> q_candidate) const;
+    vpColVector bestCandidate(const vpColVector &q0) const;
+
     // to be overloaded
     virtual void init_wMe() = 0;
     virtual vpHomogeneousMatrix fMw(const vpColVector &q) const = 0;
@@ -132,6 +136,7 @@ protected:
     // joint limits
     std::vector<double> q_max, q_min;
     vpColVector v_max_;
+    mutable std::vector<std::vector<double> > q_candidates;
 
     // 2 desired poses for switching
     vpHomogeneousMatrix M1_, M2_;

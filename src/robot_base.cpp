@@ -28,7 +28,7 @@ Robot::Robot(const urdf::Model &model, double rate)
     joint_cmd.name.clear();
 
     // find tree from base_link to tool0
-    std::string cur_link = "tool0";    
+    std::string cur_link = "tool0";
     while(cur_link != "base_link")
     {
         for(const auto &joint_it : model.joints_)
@@ -83,7 +83,7 @@ void Robot::checkPose(const vpHomogeneousMatrix &M)
         // passed transform
         vpRxyzVector rot(M.getRotationMatrix());
         std::cout << "Computed:     t = " << M.getTranslationVector().t() <<
-                     " / RPY = " << rot.t() << std::endl;        
+                     " / RPY = " << rot.t() << std::endl;
 
         // check with simulation
         if(tfBuffer->canTransform("base_link", "tool0", ros::Time(0)))
@@ -215,4 +215,52 @@ vpMatrix Robot::fJe(const vpColVector &q) const
     Vs = -(fMw(q).getRotationMatrix() * wMe.getTranslationVector()).skew();
 
     return V * fJw(q);
+}
+
+
+// inverse geometry methods
+void Robot::addCandidate(std::vector<double> q_candidate) const
+{
+    if(q_candidate.size() != dofs)
+    {
+        std::cout << "WARNING in InverseGeometry: adding a candidate with wrong dofs"
+                  << std::endl;
+    }
+    else
+        q_candidates.push_back(q_candidate);
+}
+
+
+vpColVector Robot::bestCandidate(const vpColVector &q0) const
+{
+    // returns position from q_candidates closest to q0
+    if(q_candidates.size())
+    {
+        double best;
+        int best_idx = -1;
+        int k = 0;
+        for(const auto &qsol: q_candidates)
+        {
+            double d = 0;
+            for(int i = 0; i < qsol.size(); ++i)
+                d += fabs(q0[i] - qsol[i]);
+
+            if(best_idx == -1 || d < best)
+            {
+                best = d;
+                best_idx = k;
+            }
+            k++;
+        }
+        vpColVector q(dofs);
+        if(best_idx != -1)
+        {
+            for(int i = 0; i < dofs; ++i)
+                q[i] = q_candidates[best_idx][i];
+        }
+        q_candidates.clear();
+        return q;
+    }
+    else
+        return q0;
 }

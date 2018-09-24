@@ -33,7 +33,7 @@ std::vector<double> solveType2(double x, double y, double z, double q_min, doubl
     q.reserve(2);
     if(isNull(x) && !isNull(y))
     {
-        double t = std::acos(z/y);
+        double t = acos(z/y);
         if(inAngleLimits(t, q_min, q_max))
             q.push_back(t);
         t = -t;
@@ -43,7 +43,7 @@ std::vector<double> solveType2(double x, double y, double z, double q_min, doubl
     }
     if(isNull(y) && !isNull(x))
     {
-        double t = std::asin(z/x);
+        double t = asin(z/x);
         if(inAngleLimits(t, q_min, q_max))
             q.push_back(t);
         t = M_PI-t;
@@ -53,7 +53,7 @@ std::vector<double> solveType2(double x, double y, double z, double q_min, doubl
     }
     if(isNull(z))
     {
-        double t = std::atan2(-y,x);
+        double t = atan2(-y,x);
         if(inAngleLimits(t, q_min, q_max))
             q.push_back(t);
         t = t+M_PI;
