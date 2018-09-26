@@ -206,7 +206,7 @@ bool Robot::ok()
     return ros::ok();
 }
 
-vpMatrix Robot::fJe(const vpColVector &q) const
+vpMatrix Robot::fJe(const vpColVector &q)
 {
     vpMatrix V(6,6);
     for(unsigned int i = 0; i < 6; ++i)
@@ -216,7 +216,6 @@ vpMatrix Robot::fJe(const vpColVector &q) const
 
     return V * fJw(q);
 }
-
 
 // inverse geometry methods
 void Robot::addCandidate(std::vector<double> q_candidate) const

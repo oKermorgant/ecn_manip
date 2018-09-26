@@ -126,7 +126,7 @@ public:
     {
         return fMw(q) * wMe;
     }
-    virtual vpMatrix fJe(const vpColVector &q) const;
+    virtual vpMatrix fJe(const vpColVector &q);
 
 protected:    
     unsigned int dofs, iter_cnt = 0;
