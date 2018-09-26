@@ -74,7 +74,7 @@ Robot::Robot(const urdf::Model &model, double rate)
     ros::spinOnce();
 }
 
-void Robot::checkPose(vpHomogeneousMatrix M)
+void Robot::checkPose(const vpHomogeneousMatrix &M)
 {
     displayFrame(M);
     if(ros::Time::now().toSec() - t_gt > 1)
@@ -206,7 +206,7 @@ bool Robot::ok()
     return ros::ok();
 }
 
-vpMatrix Robot::fJe(const vpColVector &q)
+vpMatrix Robot::fJe(const vpColVector &q) const
 {
     vpMatrix V(6,6);
     for(unsigned int i = 0; i < 6; ++i)
@@ -216,6 +216,7 @@ vpMatrix Robot::fJe(const vpColVector &q)
 
     return V * fJw(q);
 }
+
 
 // inverse geometry methods
 void Robot::addCandidate(std::vector<double> q_candidate) const

@@ -70,7 +70,7 @@ public:
     vpColVector aMax() const {return 0.5*v_max_;}
 
     // prints translation + roll pitch yaw
-    void checkPose(vpHomogeneousMatrix M);
+    void checkPose(const vpHomogeneousMatrix &M);
 
     // desired poses
     vpHomogeneousMatrix M0() const {return fwd?M1_:M2_;}
@@ -126,7 +126,7 @@ public:
     {
         return fMw(q) * wMe;
     }
-    virtual vpMatrix fJe(const vpColVector &q);
+    virtual vpMatrix fJe(const vpColVector &q) const;
 
 protected:    
     unsigned int dofs, iter_cnt = 0;
