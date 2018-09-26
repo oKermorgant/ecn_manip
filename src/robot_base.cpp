@@ -74,7 +74,7 @@ Robot::Robot(const urdf::Model &model, double rate)
     ros::spinOnce();
 }
 
-void Robot::checkPose(const vpHomogeneousMatrix &M)
+void Robot::checkPose(vpHomogeneousMatrix M)
 {
     displayFrame(M);
     if(ros::Time::now().toSec() - t_gt > 1)
