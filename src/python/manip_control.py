@@ -107,6 +107,7 @@ class manipControl(QtWidgets.QMainWindow):
                     setattr(self.twist_msg.linear, ax, sp)
                 else:
                     u = 'rad/s'
+                    sp *= 5
                     setattr(self.twist_msg.angular, ax, sp)
                 getattr(self.ui, 'twist_'+v).setText(v+': {} {}'.format(sp, u))
         
