@@ -546,14 +546,17 @@ if __name__ == '__main__':
         print '\n'.join(sorted(lines))
         print '// End of constants'
         
-    if dof == 6 and args.wrist:
-        print('\n\nModel from fixed to wrist frame:')
-        print('Rotation:')
-        for i in range(3):
-            print('R{}:'.format(i+1))
-            sympy.pretty_print(T0[-1][:3,i])
-        print('Translation:')
-        sympy.pretty_print(T0[-1][:3,3])
-        
+    if args.wrist:
+        if dof == 6:
+            print('\n\nModel from fixed to wrist frame:')
+            print('Rotation columns:')
+            for i in range(3):
+                print('R{}:'.format(i+1))
+                sympy.pretty_print(T0[-1][:3,i])
+            print('Translation:')
+            sympy.pretty_print(T0[-1][:3,3])
+        else:
+            print('\n\nModel from fixed to wrist frame:')
+            sympy.pretty_print(T0[-1])
         
         
