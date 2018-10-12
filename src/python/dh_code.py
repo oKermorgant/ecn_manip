@@ -85,8 +85,11 @@ def load_yaml(filename):
     prism = []     # True if prismatic
     T = []         # relative T(i-1,i) 
     u = []         # joint axis
+    fM0 = None
+    eMw = None
     
-    for joint in robot.joint.itervalues():
+    for q in sorted(robot.joint.keys()):
+        joint = robot.joint[q]
         if type(joint[iR]) == str:
             if 'q' in joint[iR]:
                 prism.append(True)
@@ -96,11 +99,16 @@ def load_yaml(filename):
         for i in xrange(4):
             if type(joint[i]) == str:
                 joint[i] = parse_expr(joint[i])
-        # transformation matrix
-        T.append(Homogeneous(joint[iA]*X, Rot(joint[iAlpha],X)) * Homogeneous(joint[iR]*Z, Rot(joint[iTheta],Z)))
-        # joint axis, always Z in DH convention
-        u.append(Z)
-    return T, u, prism
+        if q == 'f':
+            fM0 = Homogeneous(joint[iA]*X, Rot(joint[iAlpha],X)) * Homogeneous(joint[iR]*Z, Rot(joint[iTheta],Z))
+        elif q == 'e':
+            eMw = Homogeneous(joint[iA]*X, Rot(joint[iAlpha],X)) * Homogeneous(joint[iR]*Z, Rot(joint[iTheta],Z))
+        else:
+            # transformation matrix
+            T.append(Homogeneous(joint[iA]*X, Rot(joint[iAlpha],X)) * Homogeneous(joint[iR]*Z, Rot(joint[iTheta],Z)))
+            # joint axis, always Z in DH convention
+            u.append(Z)
+    return T, u, prism, fM0, eMw
 
 
 def simp_rpy(rpy):
@@ -204,7 +212,7 @@ def parse_urdf(filename, base_frame, ee_frame, use_joint_names = False):
     u = []
     all_q = []
     parent = base_frame
-    bM0 = wMe = None
+    fM0 = wMe = None
     last_moving = 0
     joints = [all_joints[i] for i in joint_path]
     
@@ -222,10 +230,10 @@ def parse_urdf(filename, base_frame, ee_frame, use_joint_names = False):
         if joint.get('type') != 'fixed':            
             last_moving = k
             if n == 0 and k != 0:
-                # there were some fixed joints before this one, build a constant matrix bM0
-                bM0 = M
+                # there were some fixed joints before this one, build a constant matrix fM0
+                fM0 = M
                 M = Mi
-                print 'Constant matrix bM0 between', base_frame, 'and', joints[k-1].find('child').get('link')
+                print 'Constant matrix fM0 between', base_frame, 'and', joints[k-1].find('child').get('link')
             else:
                 M = M*Mi
             n += 1
@@ -263,7 +271,7 @@ def parse_urdf(filename, base_frame, ee_frame, use_joint_names = False):
         if nonI:
             wMe = M      
             print 'Constant matrix wMe between', joints[last_moving].find('child').get('link'), 'and', ee_frame
-    return T, u, prism, bM0, wMe, all_q
+    return T, u, prism, fM0, wMe, all_q
 
 
 # human sorting
@@ -472,19 +480,19 @@ if __name__ == '__main__':
     if not os.path.lexists(args.files[0]):
             print 'File', args.files[0], 'does not exist'
             sys.exit(0)
-    bM0 = wMe = None
+    fM0 = wMe = None
     
     # load into symbolic
     print ''
     print 'Building intermediary matrices...'
     if args.files[0].split('.')[-1] in ('urdf','xacro'):
         if len(args.files) == 3:
-            T, u, prism, bM0, wMe, all_q = parse_urdf(args.files[0], args.files[1], args.files[2])
+            T, u, prism, fM0, wMe, all_q = parse_urdf(args.files[0], args.files[1], args.files[2])
         else:
             print 'Not enough arguments for URDF parsing - frames needed'
             sys.exit(0)
     elif args.files[0][-4:] == 'yaml' or args.files[0][-3:] == 'yml':
-        T, u, prism = load_yaml(args.files[0])
+        T, u, prism, fM0, wMe = load_yaml(args.files[0])
     else:
         print 'Unknown file type', args.files[0]
 
@@ -517,7 +525,7 @@ if __name__ == '__main__':
             exportCpp(all_J[-1], args.J, args.q)
             print '    // End of Jacobian code'        
     
-    fixed_M = ((wMe, 'wMe','end-effector'), (bM0,'bM0','base frame'))
+    fixed_M = ((wMe, 'wMe','end-effector'), (fM0,'fM0','base frame'))
     for M in fixed_M:
         if M[0] != None:
             print ''
