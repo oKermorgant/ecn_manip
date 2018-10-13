@@ -473,7 +473,7 @@ if __name__ == '__main__':
     parser.add_argument('-J', metavar='J', help='How the Jacobian matrix appears in the code',default='J') 
     parser.add_argument('--all_J', action='store_true', help='Computes the Jacobian of all frames',default=False)
     parser.add_argument('--only-fixed', action='store_true', help='Only computes the fixed matrices, before and after the arm',default=False)
-    parser.add_argument('--wrist', action='store_true', help='For a 6-dof robot, prints the model of the wrist to help computing inverse geometry',default=False)
+    parser.add_argument('--display', action='store_true', help='Prints the model of the wrist to help computing inverse geometry',default=False)
     args = parser.parse_args()
 
     # check robot description file
@@ -546,7 +546,7 @@ if __name__ == '__main__':
         print '\n'.join(sorted(lines))
         print '// End of constants'
         
-    if args.wrist:
+    if args.display:
         if dof == 6:
             print('\n\nModel from fixed to wrist frame:')
             print('Rotation columns:')

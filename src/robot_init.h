@@ -34,7 +34,6 @@ void putAt(vpColVector &_e, const vpColVector &_esub, const unsigned int r)
     es = _esub;
 }
 
-
 std::unique_ptr<ecn::Robot> initRobot(int argc, char ** argv, double rate = 100)
 {
     ros::init(argc, argv, "main_control");

@@ -68,7 +68,7 @@ int main()
         x1 = randV();
         y1 = randV();
         z1 = x1*si + y1*ci;
-        print_result(2, solveType2(x1, y1, z1, qimin, qimax), qi);
+        print_result(2, solveType2(x1, y1, z1), qi);
 
         // type3
 
@@ -78,14 +78,14 @@ int main()
         y2 = randV();
         z1 = x1*si + y1*ci;
         z2 = x2*si + y2*ci;
-        print_result(3, solveType3(x1, y1, z1, x2, y2, z2, qimin, qimax), qi);
+        print_result(3, solveType3(x1, y1, z1, x2, y2, z2), qi);
 
         // type 4
         x1 = randV();
         y1 = x1*qj*si;
         x2 = randV();
         y2 = x2*qj*ci;
-        print_result(4, solveType4(x1, y1, x2, y2, qimin, qimax, qjmin, qjmax), qi, qj);
+        print_result(4, solveType4(x1, y1, x2, y2), qi, qj);
 
 
         // type 5
@@ -95,7 +95,7 @@ int main()
         z2 = randV();
         y1 = x1*si-z1*qj;
         y2 = x2*ci-z2*qj;
-        print_result(5, solveType5(x1, y1, z1, x2, y2, z2, qimin, qimax, qjmin, qjmax), qi, qj);
+        print_result(5, solveType5(x1, y1, z1, x2, y2, z2), qi, qj);
 
 
         // type 6
@@ -104,7 +104,7 @@ int main()
         w1 = randV();
         z1 = w1*sj-x1*ci-y1*si;
         z2 = w1*cj-x1*si+y1*ci;
-        print_result(6, solveType6(x1, y1, z1, z2, w1, qimin, qimax, qjmin, qjmax), qi, qj);
+        print_result(6, solveType6(x1, y1, z1, z2, w1), qi, qj);
 
         // type 7
         x1 = randV();
@@ -113,14 +113,14 @@ int main()
         w2 = randV();
         z1 = w1*cj+w2*sj-x1*ci-y1*si;
         z2 = w1*sj-w2*cj-x1*si+y1*ci;
-        print_result(7, solveType7(x1, y1, z1, z2, w1, w2, qimin, qimax, qjmin, qjmax), qi, qj);
+        print_result(7, solveType7(x1, y1, z1, z2, w1, w2), qi, qj);
 
         // type 8
         x1 = randV();
         y1 = randV();
         z1 = x1*ci + y1*cos(qi+qj);
         z2 = x1*si + y1*sin(qi+qj);
-        print_result(8, solveType8(x1, y1, z1, z2, qimin, qimax, qjmin, qjmax), qi, qj);
+        print_result(8, solveType8(x1, y1, z1, z2), qi, qj);
 
 
     }
