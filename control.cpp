@@ -81,6 +81,8 @@ int main(int argc, char ** argv)
         }
 
 
+
+
         else if(robot->mode() == ecn::Robot::MODE_INTERP_P2P)
         {
             // reach Md with interpolated joint trajectory

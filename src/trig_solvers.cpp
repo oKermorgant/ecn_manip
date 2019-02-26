@@ -65,7 +65,6 @@ std::vector<double> solveType3(double x1, double y1, double z1,
         }
         return q;
     }
-    double t;
     q.push_back(atan2((z1*y2-z2*y1)/d, (z2*x1-z1*x2)/d));
     return q;
 }

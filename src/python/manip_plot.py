@@ -1,10 +1,15 @@
+import matplotlib
+#matplotlib.use('TkAgg')
+
 import pylab as pl
 from matplotlib import pyplot as pp
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+#from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvasRenderer
 import rospy
 from tf import TransformListener
 from std_msgs.msg import Float32MultiArray
-from sensor_msgs.msg import JointState
+from sensor_msgs.msg import JointState, Image
+from cv_bridge import CvBridge
 import xml.dom.minidom
 
 class AxisFig:
@@ -17,14 +22,14 @@ class AxisFig:
         legend = ('x','y','z')
         if not linear:
             self.ax.set_ylabel('orientation [rad]')
-            legend = ('$\\theta u_x$', '$\\theta u_y$', '$\\theta u_z$')
+            legend = ('\\theta u_x', '\\theta u_y', '\\theta u_z')
         else:
             self.ax.set_ylabel('position [m]')
         c = ('r','g','b')
         for i,l in enumerate(legend):
-            self.line.append(self.ax.plot([], [], c[i], lw=2, label=l)[0])
+            self.line.append(self.ax.plot([], [], c[i], lw=2, label='${}$'.format(l))[0])
         for i,l in enumerate(legend):
-            self.line.append(self.ax.plot([], [], c[i] + '--d', lw=1, label=l + '${}^*$', markevery=10)[0])
+            self.line.append(self.ax.plot([], [], c[i] + '--d', lw=1, label= '${}^*$'.format(l), markevery=10)[0])
         self.ax.legend(loc='center left')
             
         self.t = []
@@ -39,13 +44,13 @@ class AxisFig:
         for i in range(3):
             self.data[i].append(cur[i])
         
-        # clean reference if not in control mode
-        if des == None:
-            for i in range(3,6):
-                self.data[i] = []
-        else:
+        # dipslay or clean reference if not in control mode
+        if des:
             for i in range(3,6):
                 self.data[i].append(des[i-3])
+        else:
+            for i in range(3,6):
+                self.data[i] = []
                 
         # clean past measurements
         for idx in xrange(len(self.t)):
@@ -74,7 +79,7 @@ class AxisFig:
 
 class Plotter:
     
-    def __init__(self):
+    def __init__(self):            
         
         self.fig = pp.figure()
         
@@ -121,7 +126,7 @@ class Plotter:
             rospy.sleep(0.1)
                 
 class JointPlotter:
-    def __init__(self):
+    def __init__(self, pub = False):
         
         # init figure
         self.fig = pp.figure()
@@ -142,6 +147,10 @@ class JointPlotter:
         self.js_sub = rospy.Subscriber('/joint_states', JointState, self.joint_callback)
         self.t = []
         self.data = [[] for i in xrange(self.n)]
+        
+        self.pub = None
+        if pub:
+            self.pub = rospy.Publisher('joints', Image, queue_size=10)
         
     def init_urdf(self):
  
@@ -206,7 +215,11 @@ class JointPlotter:
                 self.ax.set_xlim(self.t[0], self.t[-1])                
             
             self.canvas.draw()        
-                
-                
             
-            
+            if self.pub:
+                # publish plot as an image - used to do videos
+                w,h = self.canvas.get_width_height()
+                im = pl.fromstring(self.canvas.tostring_rgb(), dtype='uint8').reshape(h,w,3)
+                im_msg = CvBridge().cv2_to_imgmsg(im)
+                self.pub.publish(im_msg)
+                

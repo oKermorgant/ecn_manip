@@ -4,7 +4,7 @@
     <arg name="model"/>
     <arg name="config"/>
     
-    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find ecn_manip)/robots/$(arg model)" />
+    <param name="robot_description" command="$(find xacro)/xacro $(find ecn_manip)/robots/$(arg model)" />
     
     <!-- Bridge node to transform high-level position and velocity commands to low-level position setpoints -->
     <node name="simulator" pkg="ecn_manip" type="arm_bridge.py" output="screen"/>

@@ -159,7 +159,7 @@ def load_urdf(filename):
         with open(filename) as f:
             return f.read()
     else:
-        urdf = getoutput('rosrun xacro xacro --inorder ' + filename)
+        urdf = getoutput('rosrun xacro xacro ' + filename)
         if urdf[0] == 'w':
             return getoutput('rosrun xacro xacro ' + filename)
         return urdf
@@ -548,7 +548,7 @@ if __name__ == '__main__':
         
     if args.display:
         if dof == 6:
-            print('\n\nModel from fixed to wrist frame:')
+            print('\n\nModel from root to wrist frame:')
             print('Rotation columns:')
             for i in range(3):
                 print('R{}:'.format(i+1))
@@ -556,7 +556,5 @@ if __name__ == '__main__':
             print('Translation:')
             sympy.pretty_print(T0[-1][:3,3])
         else:
-            print('\n\nModel from fixed to wrist frame:')
+            print('\n\nModel from root to wrist frame:')
             sympy.pretty_print(T0[-1])
-        
-        
