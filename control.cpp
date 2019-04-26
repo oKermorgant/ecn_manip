@@ -122,7 +122,6 @@ int main(int argc, char ** argv)
 
 
             robot->setJointVelocity(vCommand);
-            break;
         }
 
 
