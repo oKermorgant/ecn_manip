@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+
+    <!-- Bridge node to transform high-level position and velocity commands to low-level position setpoints -->
+    <node name="simulator" pkg="ecn_manip" type="arm_bridge.py" output="screen"/>
+
+    <!-- Simulator node -->
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+	
+	<node name="gui" pkg="ecn_manip" type="manip_control.py" respawn="true">
+	<remap from="joint_states" to="joint_state_publisher/manual"/>
+	</node>
+	
+	<node name="rviz" pkg="rviz" type="rviz"/>
+</launch>
