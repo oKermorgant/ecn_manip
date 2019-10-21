@@ -73,8 +73,8 @@ int main()
     // type3
 
     x1 = randV();
-    y1 = randV();
-    x2 = randV();
+    y1 = 0*randV();
+    x2 = 0*randV();
     y2 = randV();
     z1 = x1*si + y1*ci;
     z2 = x2*si + y2*ci;

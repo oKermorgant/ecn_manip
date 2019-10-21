@@ -42,6 +42,11 @@ public:
         MODE_VELOCITY_P2P
     };
 
+    // default, non-ROS constructor for the example
+    Robot()
+    {
+
+    }
 
     // constructor
     Robot(const urdf::Model &model, double rate = 100);
@@ -62,7 +67,7 @@ public:
     vpColVector jointRand() const
     {
         vpColVector qr(dofs);
-        for(int i = 0; i < dofs; ++i)
+        for(uint i = 0; i < dofs; ++i)
             qr[i] = ((q_max[i] - q_min[i])*rand())/RAND_MAX + q_min[i];
         return qr;
     }

@@ -2,7 +2,7 @@
 
 
 '''
-C-code generation for Denavit-Hartenberg parameters and URDF files
+C++ code generation for Modified Denavit-Hartenberg parameters and URDF files
 
 python dh_code.py file.yml (from yaml file)
 python dh_code.py file.urdf base effector (from URDF file)
@@ -505,14 +505,14 @@ if __name__ == '__main__':
         T0, all_J = ComputeDK_J(T, u, prism, args.all_J)
 
         print ''
-        print 'Building pose C code...'
+        print 'Building pose C++ code...'
         print ''
         print '    // Generated pose code'        
         exportCpp(T0[-1], args.T)
         print '    // End of pose code'
 
         print ''
-        print 'Building Jacobian C code...'
+        print 'Building Jacobian C++ code...'
         if args.all_J:
             for i,Js in enumerate(all_J):
                 print ''
@@ -551,10 +551,13 @@ if __name__ == '__main__':
             print('\n\nModel from root to wrist frame:')
             print('Rotation columns:')
             for i in range(3):
-                print('R{}:'.format(i+1))
+                print('\nR{}:'.format(i+1))
                 sympy.pretty_print(T0[-1][:3,i])
-            print('Translation:')
+            print('\nTranslation:')
             sympy.pretty_print(T0[-1][:3,3])
         else:
             print('\n\nModel from root to wrist frame:')
-            sympy.pretty_print(T0[-1])
+            print('\nTranslation')
+            sympy.pretty_print(T0[-1][:3,3])
+            print('\nRotation')
+            sympy.pretty_print(T0[-1][:3,:3])

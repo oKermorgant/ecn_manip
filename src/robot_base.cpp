@@ -35,7 +35,6 @@ Robot::Robot(const urdf::Model &model, double rate)
   t_gt = 0;
 
   // init joints
-
   std::vector<double> v_max_vec;
   q_max.clear();
   q_min.clear();
@@ -273,10 +272,6 @@ vpColVector Robot::bestCandidate(const vpColVector &q0) const
           best = d;
           best_idx = k;
         }
-      }
-      else
-      {
-        std::cout << "Solution " << k << "/" << q_candidates.size() << " out of bounds" << std::endl;
       }
       k++;
     }
