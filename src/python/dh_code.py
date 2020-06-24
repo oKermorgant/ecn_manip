@@ -90,13 +90,15 @@ def load_yaml(filename):
     
     for q in sorted(robot.joint.keys()):
         joint = robot.joint[q]
+        this_prism = None
         if type(joint[iR]) == str:
             if 'q' in joint[iR]:
-                prism.append(True)
+                this_prism = True
         if type(joint[iTheta]) == str:
             if 'q' in joint[iTheta]:
-                prism.append(False)     
-        for i in xrange(4):
+                this_prism = False    
+        prism.append(this_prism)
+        for i in range(4):
             if type(joint[i]) == str:
                 joint[i] = parse_expr(joint[i])
         if q == 'f':
@@ -116,7 +118,7 @@ def simp_rpy(rpy):
     Converts floating angle values to fractions of pi
     '''
     rpy = [parse_expr(v) for v in rpy]
-    for i in xrange(3):
+    for i in range(3):
         for k in range(-12,13):
             if abs(rpy[i] - k*pi/12.) < 1e-5:
                 if k != 0:
@@ -132,7 +134,7 @@ def simp_axis(u):
     Convert x y z axis to real 1 and 0
     '''
     u = [parse_expr(v) for v in u]
-    for i in xrange(3):
+    for i in range(3):
         for v in (-1,0,1):
             if abs(u[i]-v) < 1e-5:
                 u[i] = v
@@ -144,7 +146,7 @@ def simp_val(val, idx):
     '''
     global cst_symb
     val = [parse_expr(v) for v in val]
-    for i in xrange(3):
+    for i in range(3):
         if abs(val[i]) < 1e-5:
             val[i] = 0
         else:
@@ -284,8 +286,8 @@ def simp_matrix(M):
     '''
     simplify matrix for old versions of sympy
     '''
-    for i in xrange(M.rows):
-        for j in xrange(M.cols):       
+    for i in range(M.rows):
+        for j in range(M.cols):       
             M[i,j] = sympy.trigsimp(M[i,j])
             # check for these strange small numbers
             '''
@@ -312,6 +314,9 @@ def compute_Ji(joint_prism, u0, p0, i):
     '''
     Compute the i-eth column of the Jacobian (used for multiprocessing)
     '''
+    if joint_prism[i] == None:  # fixed joint
+        return sympy.zeros(6,0)
+    
     if joint_prism[i]:
         # prismatic joint: v = qdot.u and w = 0
         Jv = simp_matrix(u0[i])
@@ -361,7 +366,7 @@ def replaceFctQ(s, cDef, cUse, q = 'q'):
                 break
             
     # other occurences of qi
-    for i in xrange(100):
+    for i in range(100):
         s = s.replace('q%i' % (i+1), '%s[%i]' % (q, i))
     return s.replace('00000000000000', '').replace('0000000000000', ''), cDef, cUse
 
@@ -379,10 +384,10 @@ def exportCpp(M, s='M', q = 'q', col_offset = 0):
         # write each element
         sRows = ''
         sCols = ''
-        for i in xrange(M.rows):
+        for i in range(M.rows):
                 if M.rows > 1:
                         sRows = '[' + str(i) + ']'
-                for j in xrange(M.cols):
+                for j in range(M.cols):
                         if M.cols > 1:
                                 sCols = '[' + str(j+col_offset) + ']'
                         if M[i,j] == 0 and comment: # comment this out
@@ -408,7 +413,7 @@ def ComputeDK_J(T, u, prism, comp_all = False):
     print ''
     print 'Building direct kinematic model...'    
     T0 = []     # absolute T(0,i)
-    for i in xrange(dof):
+    for i in range(dof):
         if len(T0) == 0:
             T0.append(T[i])
         else:
@@ -422,7 +427,7 @@ def ComputeDK_J(T, u, prism, comp_all = False):
     
     R0 = [M[:3,:3] for M in T0]
     # joint axis expressed in frame 0
-    u0 = [R0[i]*u[i] for i in xrange(dof)] 
+    u0 = [R0[i]*u[i] for i in range(dof)] 
     
     all_J = []
     
@@ -432,24 +437,24 @@ def ComputeDK_J(T, u, prism, comp_all = False):
         ee_J = [dof]
     for ee in ee_J:
         # origin of each frame expressed in frame 0
-        p0 = [T0[i][:3,3] for i in xrange(ee)]
+        p0 = [T0[i][:3,3] for i in range(ee)]
                     
         # build Jacobian
         # Sympy + multithreading bug = argument is not an mpz
         #pool = Pool()
         #results = []
-        #for i in xrange(ee):
+        #for i in range(ee):
             ## add this column to pool
             #results.append(pool.apply_async(compute_Ji, args=(prism, u0, p0, i)))
         #iJ = [result.get() for result in results]
         #pool.close()  
         
-        iJ = [compute_Ji(prism, u0, p0, i) for i in xrange(ee)]
+        iJ = [compute_Ji(prism, u0, p0, i) for i in range(ee)]
 
         Js = sympy.Matrix()
         Js.rows = 6
 
-        for i in xrange(ee):
+        for i in range(ee):
             for iJi in iJ:
                 if iJi[0] == i:
                     Js = Js.row_join(iJi[1])
@@ -457,6 +462,20 @@ def ComputeDK_J(T, u, prism, comp_all = False):
     print ''
   
     return T0, all_J
+
+def better_latex(M):
+    
+    s = sympy.latex(M)
+    s = s.replace('\\cos', 'c').replace('\\sin', 's')
+    n = max([i for i in range(1,10) if '_{'+str(i)+'}' in s])
+    single = '{{\\left (q_{{{}}} \\right )}}'
+    double = '{{\\left (q_{{{}}} + q_{{{}}} \\right )}}'
+    for i1 in range(1, n+1):
+        s = s.replace(single.format(i1), '_{}'.format(i1))
+        for i2 in range(1,n):
+            s = s.replace(double.format(i1,i2), '_{{{}{}}}'.format(i1,i2))
+    print s
+    
         
     
 
@@ -474,6 +493,8 @@ if __name__ == '__main__':
     parser.add_argument('--all_J', action='store_true', help='Computes the Jacobian of all frames',default=False)
     parser.add_argument('--only-fixed', action='store_true', help='Only computes the fixed matrices, before and after the arm',default=False)
     parser.add_argument('--display', action='store_true', help='Prints the model of the wrist to help computing inverse geometry',default=False)
+    parser.add_argument('--latex', action='store_true', help='Prints direct model and Jacobian in Latex style',default=False)
+    
     args = parser.parse_args()
 
     # check robot description file
@@ -504,47 +525,48 @@ if __name__ == '__main__':
         # Do the computation
         T0, all_J = ComputeDK_J(T, u, prism, args.all_J)
 
-        print ''
-        print 'Building pose C++ code...'
-        print ''
-        print '    // Generated pose code'        
-        exportCpp(T0[-1], args.T)
-        print '    // End of pose code'
+        if not args.display:
+            print ''
+            print 'Building pose C++ code...'
+            print ''
+            print '    // Generated pose code'        
+            exportCpp(T0[-1], args.T)
+            print '    // End of pose code'
 
-        print ''
-        print 'Building Jacobian C++ code...'
-        if args.all_J:
-            for i,Js in enumerate(all_J):
+            print ''
+            print 'Building Jacobian C++ code...'
+            if args.all_J:
+                for i,Js in enumerate(all_J):
+                    print ''
+                    print '    // Generated Jacobian code to link %i'% (i+1)
+                    exportCpp(Js, args.J + str(i+1), args.q)
+                    print '    // End of Jacobian code to link %i'% (i+1)
+            else:
                 print ''
-                print '    // Generated Jacobian code to link %i'% (i+1)
-                exportCpp(Js, args.J + str(i+1), args.q)
-                print '    // End of Jacobian code to link %i'% (i+1)
-        else:
-            print ''
-            print '    // Generated Jacobian code'
-            exportCpp(all_J[-1], args.J, args.q)
-            print '    // End of Jacobian code'        
-    
-    fixed_M = ((wMe, 'wMe','end-effector'), (fM0,'fM0','base frame'))
-    for M in fixed_M:
-        if M[0] != None:
-            print ''
-            print 'Building %s code...' % M[1]
-            print ''
-            print '    // Generated %s code' % M[2]
-            exportCpp(M[0], M[1])
-            print '    // End of %s code' % M[2]
-    
-    if len(cst_symb):
-        print '\n//Model constants'
-        lines = []
-        for key in cst_symb:
-            line = 'const double {} = {};'.format(key, cst_symb[key])
-            while line[-2] == '0':
-                line = line[:-2] + ';'
-            lines.append(line)
-        print '\n'.join(sorted(lines))
-        print '// End of constants'
+                print '    // Generated Jacobian code'
+                exportCpp(all_J[-1], args.J, args.q)
+                print '    // End of Jacobian code'        
+        
+        fixed_M = ((wMe, 'wMe','end-effector'), (fM0,'fM0','base frame'))
+        for M in fixed_M:
+            if M[0] != None:
+                print ''
+                print 'Building %s code...' % M[1]
+                print ''
+                print '    // Generated %s code' % M[2]
+                exportCpp(M[0], M[1])
+                print '    // End of %s code' % M[2]
+        
+        if len(cst_symb):
+            print '\n//Model constants'
+            lines = []
+            for key in cst_symb:
+                line = 'const double {} = {};'.format(key, cst_symb[key])
+                while line[-2] == '0':
+                    line = line[:-2] + ';'
+                lines.append(line)
+            print '\n'.join(sorted(lines))
+            print '// End of constants'
         
     if args.display:
         if dof == 6:
@@ -561,3 +583,13 @@ if __name__ == '__main__':
             sympy.pretty_print(T0[-1][:3,3])
             print('\nRotation')
             sympy.pretty_print(T0[-1][:3,:3])
+            
+        print('\n\nJacobian:')
+        sympy.pretty_print(all_J[-1])
+    
+    if args.latex:
+        print('\n\nModel from root to wrist frame:')
+        better_latex(T0[-1])
+            
+        print('\n\nJacobian:')
+        better_latex(all_J[-1])

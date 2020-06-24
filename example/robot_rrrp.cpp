@@ -73,6 +73,7 @@ vpColVector ecn::RobotRRRP::inverseGeometry(const vpHomogeneousMatrix &Md, const
       {
         auto q2 = q12 - q1;
         addCandidate({q1, q2, q3, q4});
+        std::cout << "Adding candidate " << q_candidates.size() << std::endl;
       }
     }
   }

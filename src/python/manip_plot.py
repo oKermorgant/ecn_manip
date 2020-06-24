@@ -33,7 +33,7 @@ class AxisFig:
         self.ax.legend(loc='center left')
             
         self.t = []
-        self.data = [[] for i in xrange(6)]
+        self.data = [[] for i in range(6)]
         
     def update(self, cur, des = None):
         if self.t0 == 0:
@@ -53,14 +53,14 @@ class AxisFig:
                 self.data[i] = []
                 
         # clean past measurements
-        for idx in xrange(len(self.t)):
+        for idx in range(len(self.t)):
             if self.t[-1] - self.t[idx] < 10:
                 break
 
         sync = len(self.data[0]) == len(self.data[3])
         self.t = self.t[idx:]
         
-        for i in xrange(3):
+        for i in range(3):
             self.data[i] = self.data[i][idx:]
             self.line[i].set_data(self.t, self.data[i])
             if sync:
@@ -111,7 +111,7 @@ class Plotter:
                     t = pl.arctan2(s2, tr[1][3])*2
                     if t > pl.pi:
                         t -= 2*pl.pi
-                    tu = [t*tr[1][i]/s2 for i in xrange(3)]
+                    tu = [t*tr[1][i]/s2 for i in range(3)]
                 
                 
                 if len(self.des_pose):
@@ -146,7 +146,7 @@ class JointPlotter:
         # subscriber and message history
         self.js_sub = rospy.Subscriber('/joint_states', JointState, self.joint_callback)
         self.t = []
-        self.data = [[] for i in xrange(self.n)]
+        self.data = [[] for i in range(self.n)]
         
         self.pub = None
         if pub:
@@ -199,12 +199,12 @@ class JointPlotter:
                     self.data[j].append((msg.position[i] - self.qmin[j])/(self.qmax[j] - self.qmin[j]))
             
             # clean
-            for idx in xrange(len(self.t)):
+            for idx in range(len(self.t)):
                 if self.t[-1] - self.t[idx] < 10:
                     break
             self.t = self.t[idx:]
                         
-            for i in xrange(self.n):
+            for i in range(self.n):
                 self.data[i] = self.data[i][idx:]
                 self.line[i].set_data(self.t, self.data[i])
             self.line[i+1].set_data([self.t[0],self.t[-1]], [0,0])

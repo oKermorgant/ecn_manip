@@ -6,8 +6,8 @@ from threading import Thread
 import manip_gui, joint_state_publisher, manip_plot
 import rospy
 import signal
-from ecn_manip.msg import RobotConfig
 from geometry_msgs.msg import Twist
+from sensor_msgs.msg import JointState
 
 rb_order = ('manual', 'twist', 'p2p_direct','p2p_interp','p2p_line','p2p_vel')
 
@@ -24,8 +24,8 @@ class manipControl(QtWidgets.QMainWindow):
         signal.signal(signal.SIGINT, signal.SIG_DFL)
         
         # publisher for mode / switch time / lambda-gain
-        self.config_pub = rospy.Publisher('config', RobotConfig, queue_size=5)
-        self.config_msg = RobotConfig()
+        self.config_pub = rospy.Publisher('config', JointState, queue_size=5)
+        self.config = {'mode': 0, 'switch_time': 2, 'lambda': 1}
                         
         # radio buttons
         current = 0
@@ -38,13 +38,13 @@ class manipControl(QtWidgets.QMainWindow):
         # switching time slider
         ts_default = 2.
         self.ui.ts_slider.valueChanged.connect(self.ts_update)
-        self.ui.ts_slider.setValue((ts_default-1)*100.)
+        self.ui.ts_slider.setValue(int((ts_default-1)*100.))
         self.ts_update()
         
         # lambda slider
         lambda_default = 2.
         self.ui.gain_slider.valueChanged.connect(self.gain_update)
-        self.ui.gain_slider.setValue((lambda_default-1)*100.)
+        self.ui.gain_slider.setValue(int((lambda_default-1)*100.))
         self.gain_update()
         
         # twist slider
@@ -53,7 +53,7 @@ class manipControl(QtWidgets.QMainWindow):
         for la in ('v','w'):
             for ax in ('x','y','z'):
                 getattr(self.ui, '{}{}_slider'.format(la, ax)).valueChanged.connect(self.vel_update)
-                getattr(self.ui, '{}{}_slider'.format(la, ax)).setValue(50.)
+                getattr(self.ui, '{}{}_slider'.format(la, ax)).setValue(50)
         self.vel_update()
         
         self.ui.twistCenter.clicked.connect(self.twist_center)
@@ -75,19 +75,19 @@ class manipControl(QtWidgets.QMainWindow):
         # get clicked button
         for i,button in enumerate(rb_order):
             if getattr(self.ui, 'rb_'+ button).isChecked():
-                self.config_msg.mode = i
+                self.config['mode'] = i
                 if i in (0,1):
                     self.ui.spaceTabs.setCurrentIndex(i)
                 break
             
     def ts_update(self):        
         sp = self.ui.ts_slider.value()/100.+1
-        self.config_msg.switch_time = sp
+        self.config['switch_time'] = sp
         self.ui.ts_display.setText(str(sp) + ' s')
 
     def gain_update(self):        
         sp = self.ui.gain_slider.value()/100.+1
-        self.config_msg.lambda_ = sp
+        self.config['lambda'] = sp
         self.ui.gain_display.setText(str(sp))   
         
     def twist_center(self):
@@ -116,7 +116,11 @@ class manipControl(QtWidgets.QMainWindow):
         
         while not rospy.is_shutdown():
             
-            self.config_pub.publish(self.config_msg)
+            config_msg = JointState()
+            config_msg.name = list(self.config.keys())
+            config_msg.position = list(self.config.values())
+            
+            self.config_pub.publish(config_msg)
             self.twist_pub.publish(self.twist_msg)
             rospy.sleep(0.1)
         

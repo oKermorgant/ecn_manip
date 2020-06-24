@@ -4,20 +4,13 @@
 #include <visp/vpColVector.h>
 #include <visp/vpQuaternionVector.h>
 #include <visp/vpSubMatrix.h>
-#include <ros/ros.h>
-#include <sensor_msgs/JointState.h>
 #include <string>
 #include <memory>
-#include <tf2_ros/transform_broadcaster.h>
-#include <tf2_ros/transform_listener.h>
-#include <std_msgs/Float32MultiArray.h>
-#include <geometry_msgs/Twist.h>
-#include <urdf/model.h>
-#include <ecn_manip/RobotConfig.h>
+#include <node.h>
 
 /*
   Generic Robot Class
-  Gives ROS interface
+  ROS-agnostic
 */
 
 using std::string;
@@ -28,7 +21,6 @@ namespace ecn
 {
 
 class Robot {
-
 
 public:
 
@@ -43,18 +35,14 @@ public:
     };
 
     // default, non-ROS constructor for the example
-    Robot()
-    {
+    Robot()  {}
 
-    }
-
-    // constructor
-    Robot(const urdf::Model &model, double rate = 100);
+    Robot(std::unique_ptr<Node> &_node);
     // get number of dof
     inline unsigned int getDofs() const {return dofs;}
 
     // get articular position
-    inline vpColVector jointPosition() const {return q_;}
+    inline vpColVector jointPosition() const {return node->q;}
 
     // set articular position
     void setJointPosition(const vpColVector &_position);
@@ -71,8 +59,11 @@ public:
             qr[i] = ((q_max[i] - q_min[i])*rand())/RAND_MAX + q_min[i];
         return qr;
     }
-    vpColVector vMax() const {return v_max_;}
-    vpColVector aMax() const {return 0.5*v_max_;}
+    vpColVector vMax() const {return v_max;}
+    vpColVector aMax() const
+    {
+      return 0.5*vpColVector(v_max);
+    }
 
     // prints translation + roll pitch yaw
     void checkPose(const vpHomogeneousMatrix &M);
@@ -83,37 +74,30 @@ public:
     // desired twist
     vpColVector vw() const
     {
-        vpColVector v(6);
-        v[0] = desired_twist.linear.x;
-        v[1] = desired_twist.linear.y;
-        v[2] = desired_twist.linear.z;
-        v[3] = desired_twist.angular.x;
-        v[4] = desired_twist.angular.y;
-        v[5] = desired_twist.angular.z;
-        return v;
+      return node->desired_twist;
     }
 
-    int mode() const {return config.mode;}
-
+    int mode() const {return node->config.mode;}
     bool ok();
+    double time() const {return node->time();}
 
     double lambda()
     {
-        return config.lambda;
+        return static_cast<double>(node->config.lambda);
     }
 
     bool newRef() {return new_ref;}
 
-    vpColVector iterativeIK(vpColVector q0, const vpHomogeneousMatrix &Md);
+    virtual vpColVector iterativeIK(const vpHomogeneousMatrix &Md, vpColVector q0) const;
 
     static vpHomogeneousMatrix intermediaryPose(vpHomogeneousMatrix M1, vpHomogeneousMatrix M2, double a);
 
     // stop motion
-    inline void stopMotion() {setJointPosition(q_);}
+    inline void stopMotion() {setJointPosition(node->q);}
 
     void displayFrame(const vpHomogeneousMatrix &M, std::string name = "estim_DG") const
     {
-        br->sendTransform(buildTransformStamped(M, name));
+       node->sendTransform(M, name);
     }
 
     // inverse geometry methods
@@ -133,14 +117,10 @@ public:
     }
     virtual vpMatrix fJe(const vpColVector &q) const;
 
-protected:    
-    unsigned int dofs, iter_cnt = 0;
-    ecn_manip::RobotConfig config;
-    vpColVector q_;
+protected:
+    int iter_cnt = 0;
 
     // joint limits
-    std::vector<double> q_max, q_min;
-    vpColVector v_max_;
     mutable std::vector<std::vector<double> > q_candidates;
 
     // 2 desired poses for switching
@@ -148,53 +128,16 @@ protected:
     bool fwd = true, new_ref = true;
     vpHomogeneousMatrix wMe, bM0;   // constant matrices if needed
 
-    // ROS functions
-    std::unique_ptr<ros::Rate> rate;
-    std::unique_ptr<ros::NodeHandle> nh;
-    ros::Publisher cmd_pub, desired_pose_pub;
-    ros::Subscriber position_sub, twist_sub, config_sub;
-    std::unique_ptr<tf2_ros::TransformBroadcaster> br;
-    std::unique_ptr<tf2_ros::Buffer> tfBuffer;
-    std::unique_ptr<tf2_ros::TransformListener> tl;
-    sensor_msgs::JointState joint_cmd;
-    geometry_msgs::Twist desired_twist;
-    std_msgs::Float32MultiArray desired_pose;
+    // ROS interface
+    std::unique_ptr<Node> node;
+    uint dofs;
+    std::vector<double> q_max, q_min, v_max;
     double t_gt;    // last time we checked the ground truth
-
-    void onReadPosition(const sensor_msgs::JointState::ConstPtr& _msg);
-
-    void onReadTwist(const geometry_msgs::Twist &_msg)
-    {
-        desired_twist = _msg;
-    }
-
-    void onReadConfig(const ecn_manip::RobotConfig &_msg)
-    {
-        config = _msg;
-    }
-
-    geometry_msgs::TransformStamped buildTransformStamped(const vpHomogeneousMatrix &M, const std::string &frame) const
-    {
-        const vpTranslationVector t(M);
-        vpQuaternionVector qu; M.extract(qu);
-        geometry_msgs::TransformStamped transform;
-        transform.transform.translation.x = t[0];
-        transform.transform.translation.y = t[1];
-        transform.transform.translation.z = t[2];
-        transform.transform.rotation.x = qu.x();
-        transform.transform.rotation.y = qu.y();
-        transform.transform.rotation.z = qu.z();
-        transform.transform.rotation.w = qu.w();
-        transform.header.stamp = ros::Time::now();
-        transform.header.frame_id = "base_link";
-        transform.child_frame_id  = frame;
-        return transform;
-    }
 
     void updateDesiredPose()
     {
         iter_cnt++;
-        const int iter_switch = config.switch_time / rate->expectedCycleTime().toSec();
+        const int iter_switch = node->cycleLength();
 
         if(iter_cnt % iter_switch == 0)
         {
@@ -210,7 +153,7 @@ protected:
         else
             new_ref = false;
 
-        br->sendTransform(buildTransformStamped(Md(), "target"));
+        node->sendTransform(Md(), "target");
     }
 };
 

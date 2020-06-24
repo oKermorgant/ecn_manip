@@ -9,7 +9,7 @@ namespace ecn
 class RobotKr16: public ecn::Robot
 {
 public:
-    RobotKr16(const urdf::Model &model, double rate = 100) : ecn::Robot(model, rate)
+    RobotKr16(std::unique_ptr<Node> &_node) : ecn::Robot(_node)
     {
         vpPoseVector p;
 

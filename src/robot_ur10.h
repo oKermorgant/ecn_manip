@@ -10,7 +10,7 @@ namespace ecn
 class RobotUR10 : public ecn::Robot
 {
 public:
-    RobotUR10(const urdf::Model &model, double rate = 100) : ecn::Robot(model, rate)
+    RobotUR10(std::unique_ptr<Node> &_node) : ecn::Robot(_node)
     {
         vpPoseVector p;
 
@@ -65,10 +65,10 @@ public:
 
         // get nearest position from q0
         int best = 0;
-        double best_dist = (q_sol.getRow(0).t() - q0).euclideanNorm();
+        double best_dist = (q_sol.getRow(0).t() - q0).frobeniusNorm();
         for(int i = 1; i < sols; ++i)
         {
-            const double d = (q_sol.getRow(i).t() - q0).euclideanNorm();
+            const double d = (q_sol.getRow(i).t() - q0).frobeniusNorm();
             if(d < best_dist)
             {
                 best = i;

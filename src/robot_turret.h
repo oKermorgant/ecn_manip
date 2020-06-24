@@ -9,7 +9,7 @@ namespace ecn
 class RobotTurret : public ecn::Robot
 {
 public:
-    RobotTurret(const urdf::Model &model, double rate = 100) : ecn::Robot(model, rate)
+    RobotTurret(std::unique_ptr<Node> &_node) : ecn::Robot(_node)
     {
         vpPoseVector p;
         p[0] = .065;        p[1] = -0.02;        p[2] = .61;

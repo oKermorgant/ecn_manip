@@ -3,14 +3,15 @@
 
     <arg name="model"/>
     <arg name="config"/>
+    <arg name="builtin_model" default="True"/>
     
-    <param name="robot_description" command="$(find xacro)/xacro $(find ecn_manip)/robots/$(arg model)" />
-    
+    <param name="robot_description" command="$(find xacro)/xacro $(find ecn_manip)/robots/$(arg model)" if="$(arg builtin_model)"/>
+    <param name="robot_description" command="$(find xacro)/xacro $(arg model)" unless="$(arg builtin_model)"/>
     <!-- Bridge node to transform high-level position and velocity commands to low-level position setpoints -->
     <node name="simulator" pkg="ecn_manip" type="arm_bridge.py" output="screen"/>
 
     <!-- Simulator node -->
-	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 	
     <group ns="gui">
         <node name="gui" pkg="ecn_manip" type="manip_control.py" respawn="true">
@@ -18,5 +19,5 @@
         </node>
     </group>
 	
-	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find ecn_manip)/robots/rviz_config/$(arg config).rviz" />
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find ecn_manip)/launch/rviz_config/$(arg config).rviz" />
 </launch>

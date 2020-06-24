@@ -32,7 +32,7 @@ int main(int argc, char ** argv)
     while(robot->ok())
     {
         // current time
-        t = ros::Time::now().toSec();
+        t = robot->time();
 
         // update desired pose if has changed
         if(robot->newRef())

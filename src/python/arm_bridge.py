@@ -44,7 +44,7 @@ for ui in urdf:
             jointNames.append(jName)
             N += 1
             s = ui.split('"')
-            for i in xrange(len(s)):
+            for i in range(len(s)):
                 if 'lower' in s[i]:
                     jointMin.append(float(s[i+1]))
                 elif 'upper' in s[i]:
@@ -62,13 +62,13 @@ for ui in urdf:
 # update max velocity according to sample time T
 jointVelMax = [T*v for v in jointVelMax]
 
-print "Initializing bridge with " + str(N) + " joints"
+print("Initializing bridge with " + str(N) + " joints")
 
 def inJointLimits(q):
     '''
     Returns the position q projected inside the joint limits
     '''
-    return [min(max(q[i],jointMin[i]),jointMax[i]) for i in xrange(N)]
+    return [min(max(q[i],jointMin[i]),jointMax[i]) for i in range(N)]
     
     
 class State:
@@ -85,25 +85,25 @@ class State:
         '''
         # build trajectory to go from qSet to qDes with max velocity
         qTraj = []
-        for i in xrange(N):
+        for i in range(N):
             if self.qSet[i] == qDes[i]:
                 qTraj.append([])
             else:
                 qTraj.append(list(arange(self.qSet[i],qDes[i],sign(qDes[i]-self.qSet[i])*jointVelMax[i])[1:]))
-        for i in xrange(N):
+        for i in range(N):
             if len(qTraj[i]) == 0:
                 qTraj[i].append(qDes[i])
             elif qTraj[i][-1] != qDes[i]:
                 qTraj[i].append(qDes[i])
         steps = max([len(t) for t in qTraj])
-        for i in xrange(N):
+        for i in range(N):
             qTraj[i] += [qDes[i]] * (steps - len(qTraj[i]))
 
         # follow trajectory from qSet to qDes
         k = 0
         while (self.cmdCount == cmdCountCur) and not rospy.is_shutdown() and k < len(qTraj[0]):
             # running setpoint
-            self.qSet = [qTraj[i][k] for i in xrange(N)]
+            self.qSet = [qTraj[i][k] for i in range(N)]
             k = k+1
             time.sleep(T)
 
@@ -115,7 +115,7 @@ class State:
         '''
         
         # ensures max velocity
-        for i in xrange(N):
+        for i in range(N):
             if qDot[i] > jointVelMax[i]:
                 qDot[i] = jointVelMax[i]
             elif -qDot[i] > jointVelMax[i]:
@@ -125,7 +125,7 @@ class State:
         while (self.cmdCount == cmdCountCur) and not rospy.is_shutdown():
             k = k+1
             # running setpoint
-            self.qSet = inJointLimits([q0[i]+k*qDot[i] for i in xrange(N)])
+            self.qSet = inJointLimits([q0[i]+k*qDot[i] for i in range(N)])
             time.sleep(T)
     
   
@@ -134,7 +134,7 @@ class State:
         Execute command received on /robot/command topic
         '''
         if self.cmdCount == 0:
-                    print 'Switching to control mode'
+                    print('Switching to control mode')
         
         
         self.cmdCount += 1
@@ -154,7 +154,7 @@ class State:
         # erase autom setpoint only if not received for some time (2 s)
         if rospy.Time.now().to_sec() - self.t0 > .5:        
             if self.cmdCount != 0:
-                print 'Switching to manual mode'
+                print('Switching to manual mode')
             
             self.qSet = data.position
             self.cmdCount = 0
@@ -184,7 +184,7 @@ if __name__ == '__main__':
     jointState.position = [0.]*N
     jointState.name = jointNames
 
-    print 'Waiting commands'
+    print('Waiting commands')
 
     while not rospy.is_shutdown():
             
