@@ -64,6 +64,9 @@ vpHomogeneousMatrix Robot::intermediaryPose(vpHomogeneousMatrix M1, vpHomogeneou
 // set articular position
 void Robot::setJointPosition(const vpColVector &_position)
 {
+  if(mode() == MODE_VELOCITY_P2P || mode() == MODE_VELOCITY_MANUAL)
+    return;
+
   if(_position.getRows() != dofs)
   {
     std::cout << "Robot::setPosition: bad dimension" << std::endl;
@@ -72,14 +75,14 @@ void Robot::setJointPosition(const vpColVector &_position)
   node->setJointPosition(_position);
 }
 
-vpColVector Robot::iterativeIK(const vpHomogeneousMatrix &Md, vpColVector q0) const
+vpColVector Robot::iterativeIK(const vpHomogeneousMatrix &fMe_des, vpColVector q0) const
 {
   const uint max_iter(1000);
   const double min_error = 1e-4;
   uint iter(0);
   const double l = 0.15;
 
-  const auto fMw_d = Md * wMe.inverse();
+  const auto fMw_d = fMe_des * wMe.inverse();
 
   auto M = fMw(q0);
 
@@ -107,6 +110,9 @@ vpColVector Robot::iterativeIK(const vpHomogeneousMatrix &Md, vpColVector q0) co
 // set articular velocity
 void Robot::setJointVelocity(const vpColVector &_velocity)
 {
+  if(mode() != MODE_VELOCITY_P2P && mode() != MODE_VELOCITY_MANUAL)
+    return;
+
   if(_velocity.getRows() != dofs)
   {
     std::cout << "Robot::setVelocity: bad dimension" << std::endl;

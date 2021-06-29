@@ -20,10 +20,10 @@ vpHomogeneousMatrix ecn::RobotKr16::fMw(const vpColVector &q) const
 
 
 // Inverse Geometry
-vpColVector ecn::RobotKr16::inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const
+vpColVector ecn::RobotKr16::inverseGeometry(const vpHomogeneousMatrix &fMe_des, const vpColVector &q0) const
 {
     // desired wrist pose
-    vpHomogeneousMatrix fMw = Md * wMe.inverse();
+    vpHomogeneousMatrix fMw = fMe_des * wMe.inverse();
 
 
 

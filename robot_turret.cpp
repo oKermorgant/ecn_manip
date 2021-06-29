@@ -19,7 +19,7 @@ vpHomogeneousMatrix ecn::RobotTurret::fMw(const vpColVector &q) const
 
 
 // Inverse Geometry
-vpColVector ecn::RobotTurret::inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const
+vpColVector ecn::RobotTurret::inverseGeometry(const vpHomogeneousMatrix &fMe_des, const vpColVector &q0) const
 {
 
 

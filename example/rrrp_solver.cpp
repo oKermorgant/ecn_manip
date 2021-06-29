@@ -8,10 +8,12 @@ using namespace ecn;
 
 int main()
 {
+
   RobotRRRP robot;
 
   for(auto i = 0 ; i < 6; ++i)
   {
+       std::cout << std::endl;
     // generate random valid joint positions
     auto q = robot.jointRand();
 
@@ -31,7 +33,6 @@ int main()
       q[3] = robot.jointMax()[3] + 1.;
     }
 
-
     std::cout << "Joint positions: " << q.t() << std::endl;
 
     // compute corresponding DGM
@@ -42,12 +43,12 @@ int main()
     std::cout << "Solution found : " << q_solution.t() << std::endl;
     M *= robot.fMe(q_solution).inverse();
     std::cout << "Pose error: " << vpPoseVector(M).t().frobeniusNorm() << std::endl;
-
+/*
     q_solution = robot.iterativeIK(robot.fMe(q), robot.jointRand());
     std::cout << "Iterative sol. found : " << q_solution.t() << std::endl;
     M *= robot.fMe(q_solution).inverse();
-    std::cout << "Pose error: " << vpPoseVector(M).t().frobeniusNorm() << std::endl;
-    std::cout << std::endl;
+    std::cout << "Pose error: " << vpPoseVector(M).t().frobeniusNorm() << std::endl;*/
+
   }
 
 

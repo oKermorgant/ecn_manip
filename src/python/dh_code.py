@@ -493,6 +493,7 @@ if __name__ == '__main__':
     parser.add_argument('--only-fixed', action='store_true', help='Only computes the fixed matrices, before and after the arm',default=False)
     parser.add_argument('--display', action='store_true', help='Prints the model of the wrist to help computing inverse geometry',default=False)
     parser.add_argument('--latex', action='store_true', help='Prints direct model and Jacobian in Latex style',default=False)
+    parser.add_argument('--only-DGM', action='store_true', help='Only DGM',default=False)
     
     args = parser.parse_args()
 
@@ -519,7 +520,28 @@ if __name__ == '__main__':
     # get number of joints
     dof = len(T)
     
-    if not args.only_fixed:
+    if args.only_DGM:
+    
+        # Transform matrices
+        print('')
+        print('Building direct kinematic model...')
+        T0 = []     # absolute T(0,i)
+        for i in range(dof):
+            if len(T0) == 0:
+                T0.append(T[i])
+            else:
+                T0.append(simp_matrix(T0[-1]*T[i]))
+            print('  T %i/0' % (i+1))
+        print('')
+        print('Building pose C++ code...')
+        print('')
+        print('    // Generated pose code')
+        exportCpp(T0[-1], args.T)
+        print('    // End of pose code')
+        sys.exit(0)
+        
+    
+    elif not args.only_fixed:
         
         # Do the computation
         T0, all_J = ComputeDK_J(T, u, prism, args.all_J)

@@ -28,7 +28,7 @@ public:
     }
     void init_wMe();
     vpHomogeneousMatrix fMw(const vpColVector &q) const;
-    vpColVector inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const;
+    vpColVector inverseGeometry(const vpHomogeneousMatrix &fMe_des, const vpColVector &q0) const;
     vpMatrix fJw(const vpColVector &q) const;
 };
 }

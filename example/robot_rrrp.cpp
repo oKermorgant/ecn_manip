@@ -47,36 +47,55 @@ vpHomogeneousMatrix ecn::RobotRRRP::fMw(const vpColVector &q) const
 
 
 // Inverse Geometry
-vpColVector ecn::RobotRRRP::inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const
+vpColVector ecn::RobotRRRP::inverseGeometry(const vpHomogeneousMatrix &fMe_des, const vpColVector &q0) const
 {
-  // desired wrist pose
-  vpHomogeneousMatrix fMw = Md * wMe.inverse();
+  // reduced DGM
+  const vpHomogeneousMatrix oMw = fM0.inverse() * fMe_des * wMe.inverse();
 
   const double r1 = 0.27;
   const double a2 = 0.2;
   const double r3 = 0.15;
 
-  for(auto q3: solveType3(1, 0, fMw[2][0], 0, -1, fMw[2][2]))
+  // start by solving q3
+  for(double q3: solveType3(1, 0, oMw[2][0],
+                            0, -1, oMw[2][2]))
   {
-    const auto c12 = fMw[0][1];
-    const auto s12 = fMw[1][1];
-    const auto tx = fMw[0][3];
-    const auto ty = fMw[1][3];
-    const auto s3 = sin(q3);    // we are inside the q3 loop
+    std::cout << "q3 candidate: " << q3 << std::endl;
+    // -q4.c3 + r1 = tz (M[2][3])
 
-    for(auto q14: solveType5(a2, ty-r3*s12, -c12*s3, a2, tx-r3*c12, s12*s3))
+    if(!isNull(cos(q3)))
     {
-      auto q1 = q14.qi;   // extract joint i = 1
-      auto q4 = q14.qj;   // extract joint j = 4
+      double q4 = -(oMw[2][3] - r1)/cos(q3);
+      auto W1(0.);
+      auto W2(a2);
+      auto X(-q4*sin(q3));
+      auto Y(-r3);
+      auto Z1(oMw[1][3]);
+      auto Z2(-oMw[0][3]);
 
-      for(auto q12: solveType3(0, 1, c12, 1, 0, s12))
+      for(auto [q12, q1]: solveType7(X, Y, Z1, Z2, W1, W2))
       {
         auto q2 = q12 - q1;
         addCandidate({q1, q2, q3, q4});
-        std::cout << "Adding candidate " << q_candidates.size() << std::endl;
       }
     }
+    else
+    {
+      // when cos(q3) == 0
+
+
+    }
   }
+
+  for(const auto &q_cand: q_candidates)
+  {
+    std::cout << "Candidate solution: ";
+    for(auto &qi: q_cand)
+      std::cout << qi << " ";
+    std::cout << std::endl;
+  }
+
+
 
   return bestCandidate(q0);
 }

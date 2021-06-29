@@ -88,7 +88,7 @@ public:
 
     bool newRef() {return new_ref;}
 
-    virtual vpColVector iterativeIK(const vpHomogeneousMatrix &Md, vpColVector q0) const;
+    virtual vpColVector iterativeIK(const vpHomogeneousMatrix &fMe_des, vpColVector q0) const;
 
     static vpHomogeneousMatrix intermediaryPose(vpHomogeneousMatrix M1, vpHomogeneousMatrix M2, double a);
 
@@ -107,7 +107,7 @@ public:
     // to be overloaded
     virtual void init_wMe() = 0;
     virtual vpHomogeneousMatrix fMw(const vpColVector &q) const = 0;
-    virtual vpColVector inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const = 0;
+    virtual vpColVector inverseGeometry(const vpHomogeneousMatrix &fMe_des, const vpColVector &q0) const = 0;
     virtual vpMatrix fJw(const vpColVector &q) const = 0;
 
     // end-effector / wrist DK and Jacobian
@@ -126,7 +126,7 @@ protected:
     // 2 desired poses for switching
     vpHomogeneousMatrix M1_, M2_;
     bool fwd = true, new_ref = true;
-    vpHomogeneousMatrix wMe, bM0;   // constant matrices if needed
+    vpHomogeneousMatrix wMe, fM0;   // constant matrices if needed
 
     // ROS interface
     std::unique_ptr<Node> node;

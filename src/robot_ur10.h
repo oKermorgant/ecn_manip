@@ -45,7 +45,7 @@ public:
     }
     void init_wMe();
     vpHomogeneousMatrix fMw(const vpColVector &q) const;
-    vpColVector inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const
+    vpColVector inverseGeometry(const vpHomogeneousMatrix &fMe_des, const vpColVector &q0) const
     {
         vpMatrix q_sol(8,6);
         vpHomogeneousMatrix eMw;
@@ -54,7 +54,7 @@ public:
         eMw[2][0] = 1;
         eMw[2][3] = -0.1;
 
-        vpHomogeneousMatrix M = Md*eMw;
+        const auto M = fMe_des*eMw;
         int sols = ur_kinematics::inverse(M.data, q_sol.data);
         for(int i = 0; i < sols; ++i)
         {
