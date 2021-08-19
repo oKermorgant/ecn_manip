@@ -410,7 +410,7 @@ def ComputeDK_J(T, u, prism, comp_all = False):
     
     # Transform matrices
     print('')
-    print('Building direct kinematic model...')
+    print('Building direct geometric model...')
     T0 = []     # absolute T(0,i)
     for i in range(dof):
         if len(T0) == 0:
@@ -422,7 +422,7 @@ def ComputeDK_J(T, u, prism, comp_all = False):
     # Jacobian   
     # Rotation of each frame to go to frame 0
     print('')
-    print('Building differential kinematic model...')
+    print('Building kinematic model...')
     
     R0 = [M[:3,:3] for M in T0]
     # joint axis expressed in frame 0
