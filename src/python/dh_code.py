@@ -569,14 +569,14 @@ if __name__ == '__main__':
                 print('    // End of Jacobian code')
         
         fixed_M = ((wMe, 'wMe','end-effector'), (fM0,'fM0','base frame'))
-        for M in fixed_M:
-            if M[0] != None:
+        for M,symbol,title in fixed_M:
+            if M != None:
                 print('')
-                print('Building %s code...' % M[1])
+                print(f'Building {symbol} code...')
                 print('')
-                print('    // Generated %s code' % M[2])
-                exportCpp(M[0], M[1])
-                print('    // End of %s code' % M[2])
+                print(f'    // Generated {title} code')
+                exportCpp(M, symbol)
+                print(f'    // End of {title} code')
         
         if len(cst_symb):
             print('\n//Model constants')
@@ -597,7 +597,7 @@ if __name__ == '__main__':
                 print('\nR{}:'.format(i+1))
                 sympy.pretty_print(T0[-1][:3,i])
             print('\nTranslation:')
-            sympy.pretty_print(T0[-1][:3,3])
+            sympy.pretty_print(T0[-1][:3,3])            
         else:
             print('\n\nModel from root to wrist frame:')
             print('\nTranslation')
@@ -605,9 +605,15 @@ if __name__ == '__main__':
             print('\nRotation')
             sympy.pretty_print(T0[-1][:3,:3])
             
-        print('\n\nJacobian:')
-        sympy.pretty_print(all_J[-1])
-    
+            
+    print('\n\nModel from base to end-effector frame fMe for q=0')
+    I4 = sympy.eye(4)        
+    fMe = (fM0 if fM0 is not None else I4) * T0[-1] * (wMe if wMe is not None else I4)
+    for n in range(len(T0)):
+        q = sympy.Symbol(f'q{n+1}')
+        fMe = fMe.subs(q, 0)
+    sympy.pretty_print(fMe)
+                
     if args.latex:
         print('\n\nModel from root to wrist frame:')
         better_latex(T0[-1])
