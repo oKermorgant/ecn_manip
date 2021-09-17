@@ -123,6 +123,9 @@ protected:
     // joint limits
     mutable std::vector<std::vector<double> > q_candidates;
 
+    // explode inverse geometry to meaningful values
+    std::array<double, 12> explodeMatrix(const vpHomogeneousMatrix &fMe_des) const;
+
     // 2 desired poses for switching
     vpHomogeneousMatrix M1_, M2_;
     bool fwd = true, new_ref = true;

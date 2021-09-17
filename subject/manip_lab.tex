@@ -383,6 +383,17 @@
     \end{lstlisting}
   \end{itemize}
   
+  Furthermore, a function allows retrieving the 12 elements of $\Pass{0}{\M}{n*}$ from the matrix $\Pass{f}{\M}{e*}$ given to the inverse geometry solver:
+  \begin{cppcode}
+    const auto [xx,xy,xz,yx,yy,yz,zx,zy,zz,tx,ty,tz] = explodeMatrix(fMe_des);
+\end{cppcode}
+This function output the matrix terms according to:
+\begin{equation*}
+\Hom{0}{n*} = \Hom{0}{f}\Hom{f}{e*}\Hom{e}{n} = \left[\begin{matrix}x_x & y_x & z_x & t_x\\x_y & y_y & z_y & t_y\\x_z & y_z & z_z & t_z\\0 & 0 & 0 & 1\end{matrix}\right] 
+\end{equation*}
+
+
+  
   \newpage
   Below are listed the syntax for all trigonometric solvers:\\
   

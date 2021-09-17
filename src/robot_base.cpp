@@ -160,6 +160,25 @@ vpMatrix Robot::fJe(const vpColVector &q) const
 
 
 // inverse geometry methods
+
+std::array<double, 12> Robot::explodeMatrix(const vpHomogeneousMatrix &fMe_des) const
+{
+  const auto oMw{fM0.inverse() * fMe_des * wMe.inverse()};
+
+  std::array<double, 12> elements;
+  size_t idx{0};
+  for(uint col = 0; col < 4; ++col)
+  {
+    for(uint row = 0; row < 3; ++row)
+    {
+      elements[idx] = oMw[row][col];
+      idx++;
+    }
+  }
+  return elements;
+}
+
+
 void Robot::addCandidate(std::vector<double> q_candidate) const
 {
   if(q_candidate.size() != dofs)
@@ -193,7 +212,7 @@ vpColVector Robot::bestCandidate(const vpColVector &q0) const
       {
         double d = 0;
         for(uint i = 0; i < qsol.size(); ++i)
-          d += fabs(q0[i] - qsol[i]);
+          d += vpMath::sqr(q0[i] - qsol[i]);
         if(best_idx == -1 || d < best)
         {
           best = d;
