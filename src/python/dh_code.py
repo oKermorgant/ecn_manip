@@ -169,7 +169,7 @@ def parse_urdf(filename, base_frame, ee_frame, use_joint_names = False):
     '''
     Parse the URDF file to extract the geometrical parameters between given frames
     '''
-    robot = etree.fromstring(load_urdf(filename))
+    robot = etree.fromstring(load_urdf(filename).encode())
         
     # find all joints
     parents = []
@@ -491,7 +491,8 @@ if __name__ == '__main__':
     parser.add_argument('-J', metavar='J', help='How the Jacobian matrix appears in the code',default='J') 
     parser.add_argument('--all_J', action='store_true', help='Computes the Jacobian of all frames',default=False)
     parser.add_argument('--only-fixed', action='store_true', help='Only computes the fixed matrices, before and after the arm',default=False)
-    parser.add_argument('--display', action='store_true', help='Prints the model of the wrist to help computing inverse geometry',default=False)
+    parser.add_argument('--display', action='store_true', help='Prints the full model',default=False)
+    parser.add_argument('--wrist', action='store_true', help='Prints the model of the wrist to help computing inverse geometry',default=False)
     parser.add_argument('--latex', action='store_true', help='Prints direct model and Jacobian in Latex style',default=False)
     parser.add_argument('--only-DGM', action='store_true', help='Only DGM',default=False)
     
@@ -590,20 +591,25 @@ if __name__ == '__main__':
             print('// End of constants')
         
     if args.display:
-        if dof == 6:
-            print('\n\nModel from root to wrist frame:')
-            print('Rotation columns:')
-            for i in range(3):
-                print('\nR{}:'.format(i+1))
-                sympy.pretty_print(T0[-1][:3,i])
-            print('\nTranslation:')
-            sympy.pretty_print(T0[-1][:3,3])            
-        else:
-            print('\n\nModel from root to wrist frame:')
-            print('\nTranslation')
-            sympy.pretty_print(T0[-1][:3,3])
-            print('\nRotation')
-            sympy.pretty_print(T0[-1][:3,:3])
+        print('\n\nFull model from root to wrist frame:')
+        print('\nTranslation')
+        sympy.pretty_print(T0[-1][:3,3])
+        print('\nRotation')
+        sympy.pretty_print(T0[-1][:3,:3])
+        
+                
+    if args.wrist and dof == 6:        
+        print('\n\nDecomposing DGM with regards to frame 3:')
+        
+        print('\nTranslation from root to wrist frame 0T6 (should only depend on q1 q2 q3):\n')
+        sympy.pretty_print(T0[-1][:3,3])
+        
+        print('\n\nRotation 3R6 from frame 3 to wrist frame (should only depend on q4 q5 q6):\n')
+        R36 = simp_matrix(T[3][:3,:3] * T[4][:3,:3] * T[5][:3,:3])
+        sympy.pretty_print(R36)
+            
+        print('\n\nCode for the rotation 0R3 from root frame to frame 3:\n')
+        exportCpp(T0[2][:3,:3], 'R03')
             
             
     print('\n\nModel from base to end-effector frame fMe for q=0')

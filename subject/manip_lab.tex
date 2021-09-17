@@ -351,7 +351,8 @@
   
   Fixed transforms for initial and end-effector frames can also be written with keys \texttt{f:} and \texttt{e:}\\
   
-  If passing also \texttt{--display} the script will display the direct geometry with classical math notations. It can be useful for the inverse geometry computation.
+  If passing \texttt{--display} the script will display the direct geometry with classical math notations. It can be useful for the inverse geometry computation.\\
+  For a 6-DOF robot, passing \texttt{--wrist} will display useful information to benefit from a spherical wrist: math expressions for $\Pass{0}{\mathbf{t}}{6}(q_1,q_2,q_3)$ and  $\Pass{3}{\R}{6}(q_4,q_5,q_6)$, and code for $\Pass{0}{\R}{3}(q_1,q_2,q_3)$.
   
   \newpage
   \section{Trigonometric solvers}\label{trigsolve}
