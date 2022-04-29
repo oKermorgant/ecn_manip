@@ -3,12 +3,14 @@
 
 #include <visp/vpColVector.h>
 
-#include <ros/ros.h>
-#include <sensor_msgs/JointState.h>
-#include <geometry_msgs/Twist.h>
-#include <std_msgs/Float32MultiArray.h>
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/rate.hpp>
+#include <geometry_msgs/msg/twist.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
+#include <std_msgs/msg/float32_multi_array.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
 
 namespace ecn
 {
@@ -35,11 +37,12 @@ struct Config
   }
 };
 
-class Node
+class Node : public rclcpp::Node
 {
 public:
   static void init(int argc, char ** argv);
   Node(double _rate = 100);
+  Node(rclcpp::NodeOptions) : Node() {}
   std::string robotName() const {return robot_name;}
   uint initRobot(std::vector<double> &q_max, std::vector<double> &q_min,
                  std::vector<double> &v_max);
@@ -69,32 +72,20 @@ public:
 private:
   void initInterface();
 
-  ros::NodeHandle nh;
-  ros::Rate rate;
-  ros::Publisher cmd_pub, desired_pose_pub;
-  ros::Subscriber position_sub, twist_sub, config_sub;
-  tf2_ros::TransformBroadcaster br;
+  std::shared_ptr<rclcpp::Node> nh;
+  rclcpp::WallRate rate;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr cmd_pub;
+  rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr desired_pose_pub;
+  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr position_sub;
+  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr twist_sub;
+  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr config_sub;
+
   tf2_ros::Buffer tfBuffer;
   tf2_ros::TransformListener tl;
-  sensor_msgs::JointState joint_cmd;
+  tf2_ros::TransformBroadcaster br;
 
-  std_msgs::Float32MultiArray desired_pose;
-
-  void onReadPosition(const sensor_msgs::JointState::ConstPtr& _msg);
-  void onReadTwist(const geometry_msgs::Twist &_msg)
-  {
-    desired_twist[0] = _msg.linear.x;
-    desired_twist[1] = _msg.linear.y;
-    desired_twist[2] = _msg.linear.z;
-    desired_twist[3] = _msg.angular.x;
-    desired_twist[4] = _msg.angular.y;
-    desired_twist[5] = _msg.angular.z;
-  }
-  void onReadConfig(const sensor_msgs::JointState::ConstPtr& _msg)
-  {
-    config.updateFrom(_msg->name, _msg->position);
-  }
-
+  sensor_msgs::msg::JointState joint_cmd;
+  std_msgs::msg::Float32MultiArray desired_pose;
 };
 
 }

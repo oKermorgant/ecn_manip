@@ -44,7 +44,7 @@ def Rxyz(rpy):
 
 def Quat(M):
     Mn = array(M)
-    print quaternion_from_matrix(Mn)
+    print(quaternion_from_matrix(Mn))
 
 def Homogeneous(t, R):
     '''
@@ -122,7 +122,7 @@ def simp_rpy(rpy):
         for k in range(-12,13):
             if abs(rpy[i] - k*pi/12.) < 1e-5:
                 if k != 0:
-                    print '  changing', rpy[i], 'to', sympy.simplify(k*sympy.pi/12)
+                    print('  changing', rpy[i], 'to', sympy.simplify(k*sympy.pi/12))
                 rpy[i] = str(sympy.simplify(k*sympy.pi/12))
                 if rpy[i] == '0':
                     rpy[i] = 0
@@ -181,11 +181,11 @@ def parse_urdf(filename, base_frame, ee_frame, use_joint_names = False):
         children.append(joint.find('child').get('link'))
         
     if base_frame not in parents:
-        print 'Could not find', base_frame, 'in parent link list'
+        print('Could not find', base_frame, 'in parent link list')
         print('Known parents: ' + " ".join(set(parents)))
         sys.exit(0)
     if ee_frame not in children:
-        print 'Could not find', ee_frame, 'in children link list'
+        print('Could not find', ee_frame, 'in children link list')
         print('Known children: ' + " ".join(set(children)))
         sys.exit(0)
     # find path from base link to effector link
@@ -195,11 +195,11 @@ def parse_urdf(filename, base_frame, ee_frame, use_joint_names = False):
         try:
             i = children.index(cur_link)
         except:
-            print 'Could not find', cur_link, 'in link list'
+            print('Could not find', cur_link, 'in link list')
             sys.exit(0)
         
         if i in joint_path:
-            print 'Error: passed 2 times through', cur_link
+            print('Error: passed 2 times through', cur_link)
             sys.exit(0)
             
         joint_path.append(i)
@@ -325,7 +325,7 @@ def compute_Ji(joint_prism, u0, p0, i):
         # revolute joint: v = [qdot.u]x p and w = qdot.u
         Jv = simp_matrix(sk(u0[i])*(p0[-1]-p0[i]))
         Jw = simp_matrix(u0[i])
-    print '   J_%i' % (i+1)
+    print('   J_%i' % (i+1))
     return (i, Jv.col_join(Jw))    # register this column as column i
     #return Jv.col_join(Jw)
 
@@ -400,30 +400,30 @@ def exportCpp(M, s='M', q = 'q', col_offset = 0):
         cDef = cDef.values()
         human_sort(cDef)
         for line in cDef:
-            print '   ',line
+            print('   ',line)
         # print matrix content
         for line in M_lines:
-            print '   ', line
+            print('   ', line)
             
 def ComputeDK_J(T, u, prism, comp_all = False):
      # get number of joints
     dof = len(T)
     
     # Transform matrices
-    print ''
-    print 'Building direct kinematic model...'    
+    print('')
+    print('Building direct kinematic model...'   ) 
     T0 = []     # absolute T(0,i)
     for i in range(dof):
         if len(T0) == 0:
             T0.append(T[i])
         else:
             T0.append(simp_matrix(T0[-1]*T[i]))
-        print '  T %i/0' % (i+1)
+        print('  T %i/0' % (i+1))
         
     # Jacobian   
     # Rotation of each frame to go to frame 0
-    print ''
-    print 'Building differential kinematic model...'
+    print('')
+    print('Building differential kinematic model...')
     
     R0 = [M[:3,:3] for M in T0]
     # joint axis expressed in frame 0
@@ -459,7 +459,7 @@ def ComputeDK_J(T, u, prism, comp_all = False):
                 if iJi[0] == i:
                     Js = Js.row_join(iJi[1])
         all_J.append(Js)
-    print ''
+    print('')
   
     return T0, all_J
 
@@ -474,7 +474,7 @@ def better_latex(M):
         s = s.replace(single.format(i1), '_{}'.format(i1))
         for i2 in range(1,n):
             s = s.replace(double.format(i1,i2), '_{{{}{}}}'.format(i1,i2))
-    print s
+    print(s)
     
         
     

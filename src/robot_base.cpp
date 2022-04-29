@@ -64,6 +64,9 @@ vpHomogeneousMatrix Robot::intermediaryPose(vpHomogeneousMatrix M1, vpHomogeneou
 // set articular position
 void Robot::setJointPosition(const vpColVector &_position)
 {
+  if(mode() == ControlMode::VELOCITY_P2P || mode() == ControlMode::VELOCITY_MANUAL)
+    return;
+
   if(_position.getRows() != dofs)
   {
     std::cout << "Robot::setPosition: bad dimension" << std::endl;
@@ -72,32 +75,29 @@ void Robot::setJointPosition(const vpColVector &_position)
   node->setJointPosition(_position);
 }
 
-vpColVector Robot::iterativeIK(const vpHomogeneousMatrix &Md, vpColVector q0) const
+vpColVector Robot::iterativeIK(const vpHomogeneousMatrix &fMe_des, vpColVector q0) const
 {
   const uint max_iter(1000);
-  const double min_error = 1e-4;
-  uint iter(0);
-  const double l = 0.15;
+  const double min_lin_error = 1e-4;
+  const double min_ang_error = 1e-3;
+  const double lambda = 0.15;
 
-  const auto fMw_d = Md * wMe.inverse();
+  const auto fMw_d = fMe_des * wMe.inverse();
 
   auto M = fMw(q0);
 
   vpColVector v(6);
-  vpSubColVector t(v, 0, 3);
-  vpSubColVector tu(v, 3, 3);
-
   vpPoseVector p(M.inverse()*fMw_d);
 
+  uint iter(0);
   while(iter++ < max_iter &&
-        (p.getTranslationVector().frobeniusNorm() > min_error ||
-         std::abs(p.getThetaUVector().getTheta()) > 1e-3))
+        (p.getTranslationVector().frobeniusNorm() > min_lin_error ||
+         std::abs(p.getThetaUVector().getTheta()) > min_ang_error))
   {
-
-
-    t = M.getRotationMatrix() * p.getTranslationVector();
-    tu = M.getRotationMatrix() * static_cast<vpColVector>(p.getThetaUVector());
-    q0 += l * fJw(q0).t() * v;
+    const auto R{M.getRotationMatrix()};
+    v.insert(0, R * p.getTranslationVector());
+    v.insert(3, R * static_cast<vpColVector>(p.getThetaUVector()));
+    q0 += lambda * fJw(q0).t() * v;
     M = fMw(q0);
     p.buildFrom(M.inverse() * fMw_d);
   }
@@ -107,17 +107,19 @@ vpColVector Robot::iterativeIK(const vpHomogeneousMatrix &Md, vpColVector q0) co
 // set articular velocity
 void Robot::setJointVelocity(const vpColVector &_velocity)
 {
+  if(mode() != ControlMode::VELOCITY_P2P && mode() != ControlMode::VELOCITY_MANUAL)
+    return;
+
   if(_velocity.getRows() != dofs)
   {
     std::cout << "Robot::setVelocity: bad dimension" << std::endl;
     return;
   }
   // if v_max_, scales velocity (educational goal)
-  unsigned int i;
   double scale = 1.;
   if(v_max.size()!=0)
   {
-    for(i=0;i<dofs;++i)
+    for(uint i=0;i<dofs;++i)
       scale = std::max(scale, std::abs(_velocity[i])/v_max[i]);
     if(scale > 1)
     {
@@ -154,6 +156,25 @@ vpMatrix Robot::fJe(const vpColVector &q) const
 
 
 // inverse geometry methods
+
+std::array<double, 12> Robot::explodeMatrix(const vpHomogeneousMatrix &fMe_des) const
+{
+  const auto oMw{fM0.inverse() * fMe_des * wMe.inverse()};
+
+  std::array<double, 12> elements;
+  size_t idx{0};
+  for(uint col = 0; col < 4; ++col)
+  {
+    for(uint row = 0; row < 3; ++row)
+    {
+      elements[idx] = oMw[row][col];
+      idx++;
+    }
+  }
+  return elements;
+}
+
+
 void Robot::addCandidate(std::vector<double> q_candidate) const
 {
   if(q_candidate.size() != dofs)
@@ -187,7 +208,7 @@ vpColVector Robot::bestCandidate(const vpColVector &q0) const
       {
         double d = 0;
         for(uint i = 0; i < qsol.size(); ++i)
-          d += fabs(q0[i] - qsol[i]);
+          d += vpMath::sqr(q0[i] - qsol[i]);
         if(best_idx == -1 || d < best)
         {
           best = d;

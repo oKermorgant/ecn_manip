@@ -1,10 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from PyQt5 import QtWidgets
 import sys
 from threading import Thread
 import manip_gui, joint_state_publisher, manip_plot
-import rospy
+import rclpy
+from rclpy.node import Node
 import signal
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import JointState
@@ -13,18 +14,17 @@ rb_order = ('manual', 'twist', 'p2p_direct','p2p_interp','p2p_line','p2p_vel')
 
 class manipControl(QtWidgets.QMainWindow):
     
-    def __init__(self, parent=None):
+    def __init__(self, node, parent=None):
         QtWidgets.QMainWindow.__init__(self, parent)
         self.ui = manip_gui.Ui_main_ui()
         self.ui.setupUi(self)
+        self.node = node
         
         # spawn jsp on vertical layout
-        self.jsp = joint_state_publisher.JointStatePublisher(self.ui.joint_manual)
-        Thread(target=self.jsp.loop).start()
-        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        self.jsp = joint_state_publisher.JointStatePublisher(self.ui.joint_manual, self.node)
         
         # publisher for mode / switch time / lambda-gain
-        self.config_pub = rospy.Publisher('config', JointState, queue_size=5)
+        self.config_pub = self.node.create_publisher(JointState, 'config', 5)
         self.config = {'mode': 0, 'switch_time': 2, 'lambda': 1}
                         
         # radio buttons
@@ -48,7 +48,7 @@ class manipControl(QtWidgets.QMainWindow):
         self.gain_update()
         
         # twist slider
-        self.twist_pub = rospy.Publisher('twist_manual', Twist, queue_size=5)
+        self.twist_pub = self.node.create_publisher(Twist, 'twist_manual', 5)
         self.twist_msg = Twist()
         for la in ('v','w'):
             for ax in ('x','y','z'):
@@ -59,18 +59,18 @@ class manipControl(QtWidgets.QMainWindow):
         self.ui.twistCenter.clicked.connect(self.twist_center)
                 
         # plotter
-        self.plot = manip_plot.Plotter()
+        self.plot = manip_plot.Plotter(self.node)
         self.ui.plot.addWidget(self.plot.canvas)
-        Thread(target=self.plot.loop).start()
+        #Thread(target=self.plot.loop).start()
         
         # joint plotter
-        self.plotJoints = manip_plot.JointPlotter()
+        self.plotJoints = manip_plot.JointPlotter(self.node)
         self.ui.plotJoints.addWidget(self.plotJoints.canvas)
         
         # publish slider values
-        Thread(target=self.loop).start()
-               
-               
+        Thread(target=self.loop).start()               
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        
     def mode_update(self):
         # get clicked button
         for i,button in enumerate(rb_order):
@@ -110,28 +110,39 @@ class manipControl(QtWidgets.QMainWindow):
                     sp *= 5
                     setattr(self.twist_msg.angular, ax, sp)
                 getattr(self.ui, 'twist_'+v).setText(v+': {} {}'.format(sp, u))
-        
+                
+    def now(self):
+        s,ns = self.node.get_clock().now().seconds_nanoseconds()
+        return s + ns*1e-9
             
     def loop(self):
+        from time import sleep
         
-        while not rospy.is_shutdown():
+        while rclpy.ok():
             
             config_msg = JointState()
             config_msg.name = list(self.config.keys())
-            config_msg.position = list(self.config.values())
+            config_msg.position = [float(v) for v in self.config.values()]
             
             self.config_pub.publish(config_msg)
             self.twist_pub.publish(self.twist_msg)
-            rospy.sleep(0.1)
+            
+            self.jsp.publish()
+            self.plot.publish(self.now())
+            
+            rclpy.spin_once(self.node)
+            sleep(0.1)
         
             
-             
 
 if __name__ == '__main__':
     
-    rospy.init_node('manip_control_gui')
+    rclpy.init(args=None)
+    node = Node('manip_control_gui')
+    
     app = QtWidgets.QApplication(sys.argv)
-    window = manipControl()
+    
+    window = manipControl(node)
     window.show()
     sys.exit(app.exec_())
     

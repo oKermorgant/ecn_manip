@@ -5,12 +5,10 @@ import pylab as pl
 from matplotlib import pyplot as pp
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 #from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvasRenderer
-import rospy
-from tf import TransformListener
+import rclpy
+from tf2_ros import TransformListener, Buffer
 from std_msgs.msg import Float32MultiArray
-from sensor_msgs.msg import JointState, Image
-from cv_bridge import CvBridge
-import xml.dom.minidom
+from sensor_msgs.msg import JointState
 
 class AxisFig:
     
@@ -35,10 +33,10 @@ class AxisFig:
         self.t = []
         self.data = [[] for i in range(6)]
         
-    def update(self, cur, des = None):
+    def update(self, t, cur, des = None):
         if self.t0 == 0:
-            self.t0 = rospy.Time.now().to_sec()
-        self.t.append(rospy.Time.now().to_sec() - self.t0)
+            self.t0 = t
+        self.t.append(t - self.t0)
         
         # add measurement
         for i in range(3):
@@ -79,7 +77,7 @@ class AxisFig:
 
 class Plotter:
     
-    def __init__(self):            
+    def __init__(self, node):            
         
         self.fig = pp.figure()
         
@@ -88,53 +86,53 @@ class Plotter:
         self.fig.tight_layout()
         self.canvas = FigureCanvas(self.fig)
         
-        self.tl = TransformListener()
-        self.des_sub = rospy.Subscriber('/desired_pose', Float32MultiArray, self.des_pose_cb)
+        self.buff = Buffer()
+        self.tl = TransformListener(self.buff, node)
+        self.des_sub = node.create_subscription(Float32MultiArray, '/desired_pose', self.des_pose_cb, 3)
         self.des_pose = []
         
     def des_pose_cb(self, msg):
         self.des_pose = msg.data
         
-    def loop(self):
-        
-        while not rospy.is_shutdown():
+    def publish(self, now):
                         
-            # update TF
-            if self.tl.canTransform('base_link', 'tool0', rospy.Time(0)):
-                tr = self.tl.lookupTransform('base_link', 'tool0', rospy.Time(0))                
-                d = False
-                
-                # angle-axis from quaternion
-                s2 = pl.sqrt(tr[1][0]**2 + tr[1][1]**2 + tr[1][2]**2)
-                tu = [0,0,0]
-                if s2 > 1e-6:
-                    t = pl.arctan2(s2, tr[1][3])*2
-                    if t > pl.pi:
-                        t -= 2*pl.pi
-                    tu = [t*tr[1][i]/s2 for i in range(3)]
-                
-                
-                if len(self.des_pose):
-                    d = self.lin_ax.update(tr[0], self.des_pose[:3])
-                    self.ang_ax.update(tu, self.des_pose[3:])
-                else:
-                    d = self.lin_ax.update(tr[0])
-                    self.ang_ax.update(tu)
-                if d:
-                    self.canvas.draw()
-                
-            rospy.sleep(0.1)
+        # update TF
+        if self.buff.can_transform('base_link', 'tool0', rclpy.time.Time()):
+            tr = self.buff.lookup_transform('base_link', 'tool0', rclpy.time.Time())
+            
+            d = False
+            t = tr.transform.translation
+            q = tr.transform.rotation
+            
+            # angle-axis from quaternion
+            s2 = pl.sqrt(q.x**2 + q.y**2 + q.z**2)
+            tu = [0,0,0]
+            if s2 > 1e-6:
+                theta = pl.arctan2(s2, q.w)*2
+                if theta > pl.pi:
+                    theta -= 2*pl.pi
+                tu = [theta*qi/s2 for qi in (q.x,q.y,q.z)]
+                                        
+            if len(self.des_pose):
+                d = self.lin_ax.update(now, [t.x,t.y,t.z], self.des_pose[:3])
+                self.ang_ax.update(now, tu, self.des_pose[3:])
+            else:
+                d = self.lin_ax.update(now, [t.x,t.y,t.z])
+                self.ang_ax.update(now, tu)
+            if d:
+                self.canvas.draw()
                 
 class JointPlotter:
-    def __init__(self, pub = False):
+    def __init__(self, node):
+        
+        self.node = node
         
         # init figure
         self.fig = pp.figure()
         self.ax = self.fig.add_subplot(111)
         self.ax.set_ylim(-0.05, 1.05)
         self.ax.set_yticks([0,1])
-        self.ax.set_yticklabels(['lower limit','upper limit'])
-        self.line = []
+        self.ax.set_yticklabels(['lower limit','upper limit'])        
         self.t0 = 0  
         self.tjs = 0
         self.fig.tight_layout()
@@ -144,37 +142,23 @@ class JointPlotter:
         self.n = self.init_urdf()
 
         # subscriber and message history
-        self.js_sub = rospy.Subscriber('/joint_states', JointState, self.joint_callback)
+        self.js_sub = node.create_subscription(JointState, '/joint_states', self.joint_callback, 10)
         self.t = []
-        self.data = [[] for i in range(self.n)]
+        self.data = [[] for i in range(self.n)]                
         
-        self.pub = None
-        if pub:
-            self.pub = rospy.Publisher('joints', Image, queue_size=10)
+    def now(self):
+        s,ns = self.node.get_clock().now().seconds_nanoseconds()
+        return s + ns*1e-9
         
     def init_urdf(self):
- 
-        robot = xml.dom.minidom.parseString(rospy.get_param('/robot_description'))        
-        robot = robot.getElementsByTagName('robot')[0]
-        self.names = []
-        self.qmin = []
-        self.qmax = []
-                
-        # Find all non-fixed joints
-        for child in robot.childNodes:
-            if child.nodeType is child.TEXT_NODE:
-                continue
-            if child.localName == 'joint':
-                jtype = child.getAttribute('type')
-                if jtype == 'fixed' or jtype == 'floating':
-                    continue
-                name = child.getAttribute('name')
-                limit = child.getElementsByTagName('limit')[0]
-                self.names.append(name)
-                self.qmin.append(float(limit.getAttribute('lower')))
-                self.qmax.append(float(limit.getAttribute('upper')))                
-                self.line.append(self.ax.plot([], [], lw=2, label=name)[0])
-                
+        
+        from robot_description import Arm
+        robot = Arm(self.node)
+        self.names = robot.names
+        self.qmin = robot.lower
+        self.qmax = robot.upper
+        
+        self.line = [self.ax.plot([], [], lw=2, label=name)[0] for name in self.names]
         self.line.append(self.ax.plot([], [], 'k--', lw=2)[0])
         self.line.append(self.ax.plot([], [], 'k--', lw=2)[0])
         self.ax.legend(loc='center left')
@@ -183,7 +167,7 @@ class JointPlotter:
                         
     def joint_callback(self, msg):
         
-        t = rospy.Time.now().to_sec()
+        t = self.now()
         if self.t0 == 0:
             self.t0 = t
         
@@ -214,12 +198,5 @@ class JointPlotter:
             if len(self.t) > 10:                
                 self.ax.set_xlim(self.t[0], self.t[-1])                
             
-            self.canvas.draw()        
-            
-            if self.pub:
-                # publish plot as an image - used to do videos
-                w,h = self.canvas.get_width_height()
-                im = pl.fromstring(self.canvas.tostring_rgb(), dtype='uint8').reshape(h,w,3)
-                im_msg = CvBridge().cv2_to_imgmsg(im)
-                self.pub.publish(im_msg)
+            self.canvas.draw()
                 

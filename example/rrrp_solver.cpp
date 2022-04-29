@@ -41,12 +41,12 @@ int main()
     auto q_solution = robot.inverseGeometry(M, robot.jointRand());
     std::cout << "Solution found : " << q_solution.t() << std::endl;
     M *= robot.fMe(q_solution).inverse();
-    std::cout << "Pose error: " << vpPoseVector(M).t().frobeniusNorm() << std::endl;
+    std::cout << "   -> pose error: " << vpPoseVector(M).t().frobeniusNorm() << std::endl;
 
     q_solution = robot.iterativeIK(robot.fMe(q), robot.jointRand());
     std::cout << "Iterative sol. found : " << q_solution.t() << std::endl;
     M *= robot.fMe(q_solution).inverse();
-    std::cout << "Pose error: " << vpPoseVector(M).t().frobeniusNorm() << std::endl;
+    std::cout << "   -> pose error: " << vpPoseVector(M).t().frobeniusNorm() << std::endl;
     std::cout << std::endl;
   }
 

@@ -1,16 +1,17 @@
 #include <robot_init.h>
 
 using namespace std;
+using namespace ecn;
 
 int main(int argc, char ** argv)
 {
     // initialize robot class and get DOF's
-    auto robot = ecn::initRobot(argc, argv, 100);
-    const unsigned n = robot->getDofs();
+    const auto robot{initRobot(argc, argv, 100)};
+    const unsigned n{robot->getDofs()};
 
-    // robot properties
-    const vpColVector vMax = robot->vMax();
-    const vpColVector aMax = robot->aMax();
+    // robot properties - max velocity and acceleration
+    const auto vMax{robot->vMax()};
+    const auto aMax{robot->aMax()};
 
     // main variables
     vpColVector q(n);               // joint position
@@ -26,13 +27,13 @@ int main(int argc, char ** argv)
 
     // TODO declare other variables if needed
     vpColVector q0(n), qf(n);        // joint position setpoint for initial and final poses
-    double t, t0, tf;
+    double t0, tf;
 
     // main control loop
     while(robot->ok())
     {
-        // current time
-        t = robot->time();
+        // current time [s]
+        const auto t{robot->time()};
 
         // update desired pose if has changed
         if(robot->newRef())
@@ -40,9 +41,9 @@ int main(int argc, char ** argv)
             Md = robot->Md();
             M0 = robot->M0();
             pd.buildFrom(Md);
+            // starting time of this motion [s]
             t0 = t;
         }
-
 
         // get current joint positions
         q = robot->jointPosition();
@@ -52,7 +53,7 @@ int main(int argc, char ** argv)
         M = robot->fMe(q);  // matrix form
         p.buildFrom(M);     // translation + angle-axis form
 
-        if(robot->mode() == ecn::Robot::MODE_POSITION_MANUAL)
+        if(robot->mode() == ControlMode::POSITION_MANUAL)
         {
             // just check the Direct Geometric Model
             // TODO: fill the fMw function
@@ -60,10 +61,10 @@ int main(int argc, char ** argv)
         }
 
 
-        else if(robot->mode() == ecn::Robot::MODE_VELOCITY_MANUAL)
+        else if(robot->mode() == ControlMode::VELOCITY_MANUAL)
         {
             // follow a given operational velocity
-            v = robot->vw();
+            v = robot->guiVelocityScrew();
 
             // TODO: fill the fJw function
             // TODO: compute vCommand
@@ -72,7 +73,7 @@ int main(int argc, char ** argv)
         }
 
 
-        else if(robot->mode() == ecn::Robot::MODE_DIRECT_P2P)
+        else if(robot->mode() == ControlMode::DIRECT_P2P)
         {
             // find the Inverse Geometry to reach Md
             // TODO: fill the inverseGeometry function
@@ -83,9 +84,9 @@ int main(int argc, char ** argv)
 
 
 
-        else if(robot->mode() == ecn::Robot::MODE_INTERP_P2P)
+        else if(robot->mode() == ControlMode::POLYNOM_P2P)
         {
-            // reach Md with interpolated joint trajectory
+            // reach Md with polynomial joint trajectory
             // use q0 (initial position), qf (final), aMax and vMax
 
             // if reference has changed, compute new tf
@@ -101,7 +102,7 @@ int main(int argc, char ** argv)
         }
 
 
-        else if(robot->mode() == ecn::Robot::MODE_STRAIGHT_LINE_P2P)
+        else if(robot->mode() == ControlMode::STRAIGHT_LINE_P2P)
         {
             // go from M0 to Md in 1 sec
             tf = 1;
@@ -113,7 +114,7 @@ int main(int argc, char ** argv)
         }
 
 
-        else if(robot->mode() == ecn::Robot::MODE_VELOCITY_P2P)
+        else if(robot->mode() == ControlMode::VELOCITY_P2P)
         {
             // go to Md using operational velocity
 
