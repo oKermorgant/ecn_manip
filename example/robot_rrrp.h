@@ -1,7 +1,7 @@
 #ifndef ROBOT_KR16_H
 #define ROBOT_KR16_H
 
-#include <robot_base.h>
+#include <ecn_manip/robot_base.h>
 
 namespace ecn
 {

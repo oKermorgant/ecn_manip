@@ -1,4 +1,4 @@
-#include <node.h>
+#include <ecn_manip/node.h>
 #include <urdf/model.h>
 #include <std_msgs/msg/string.hpp>
 

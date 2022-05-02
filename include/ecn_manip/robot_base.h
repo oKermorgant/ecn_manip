@@ -6,7 +6,7 @@
 #include <visp/vpSubMatrix.h>
 #include <string>
 #include <memory>
-#include <node.h>
+#include <ecn_manip/node.h>
 
 /*
   Generic Robot Class

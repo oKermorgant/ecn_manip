@@ -1,5 +1,5 @@
-#include <robot_turret.h>
-#include <trig_solvers.h>
+#include <ecn_manip/robot_turret.h>
+#include <ecn_manip/trig_solvers.h>
 
 // Model of Turret robot
 

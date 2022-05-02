@@ -1,5 +1,5 @@
-#include <robot_ur10.h>
-#include <trig_solvers.h>
+#include <ecn_manip/robot_ur10.h>
+#include <ecn_manip/trig_solvers.h>
 
 // Model of UR-10 robot
 

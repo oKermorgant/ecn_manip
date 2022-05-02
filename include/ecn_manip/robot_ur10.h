@@ -1,8 +1,8 @@
 #ifndef ROBOT_UR10_H
 #define ROBOT_UR10_H
 
-#include <robot_base.h>
-#include <ur_kin/ur_kin.h>
+#include <ecn_manip/robot_base.h>
+#include <ecn_manip/ur_kin.h>
 
 namespace ecn
 {

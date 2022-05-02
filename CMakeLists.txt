@@ -12,21 +12,24 @@ find_package(urdfdom REQUIRED)
 find_package(VISP REQUIRED COMPONENTS core)
 set(CMAKE_CXX_STANDARD 17)
 
+include_directories(include ${VISP_INCLUDE_DIRS})
+
 # main library
-add_library(ecn_manip SHARED src/robot_base.h src/robot_base.cpp src/robot_init.h
-            src/trig_solvers.h src/trig_solvers.cpp
-            src/ur_kin/ur_kin.h src/ur_kin/ur_kin.cpp
-            src/node.cpp src/node.h)
-target_include_directories(ecn_manip PUBLIC src ${VISP_INCLUDE_DIRS})
+add_library(ecn_manip SHARED    src/robot_base.cpp 
+                                src/trig_solvers.cpp
+                                src/ur_kin.cpp
+                                src/node.cpp)
+target_include_directories(ecn_manip PUBLIC include ${VISP_INCLUDE_DIRS})
 target_link_libraries(ecn_manip ${VISP_LIBRARIES})
 ament_target_dependencies(ecn_manip rclcpp sensor_msgs tf2_ros urdf urdfdom_headers)
 
 # Main executable
 add_executable(control control.cpp
-              src/robot_turret.h robot_turret.cpp
-               src/robot_ur10.h robot_ur10.cpp
-               src/robot_kr16.h robot_kr16.cpp
+               robot_turret.cpp
+               robot_ur10.cpp
+               robot_kr16.cpp
                )
+target_include_directories(control PUBLIC include)
 target_link_libraries(control ecn_manip)
 ament_target_dependencies(control rclcpp tf2_ros urdfdom_headers)
 
@@ -50,6 +53,11 @@ install(PROGRAMS ${ecn_manip_python} DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY robots launch
   DESTINATION share/${PROJECT_NAME})
+  
+install(DIRECTORY include/ DESTINATION include/)
+  
+ament_export_libraries(ecn_manip)
+ament_export_include_directories(include)
 
 ament_package()
 

@@ -1,4 +1,4 @@
-#include <robot_base.h>
+#include <ecn_manip/robot_base.h>
 #include <visp/vpExponentialMap.h>
 #include <visp/vpRxyzVector.h>
 #include <algorithm>

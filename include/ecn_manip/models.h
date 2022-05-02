@@ -1,5 +1,5 @@
 #include <visp/vpHomogeneousMatrix.h>
-#include <robot_init.h>
+#include <ecn_manip/robot_init.h>
 
 // generic call to models
 // DO NOT MODIFY

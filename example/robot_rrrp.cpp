@@ -1,5 +1,5 @@
 #include "robot_rrrp.h"
-#include <trig_solvers.h>
+#include <ecn_manip/trig_solvers.h>
 
 // Model of RRRP robot
 

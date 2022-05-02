@@ -1,10 +1,10 @@
 #ifndef ECNROBOTINIT_H
 #define ECNROBOTINIT_H
 
-#include <robot_base.h>
-#include <robot_kr16.h>
-#include <robot_turret.h>
-#include <robot_ur10.h>
+#include <ecn_manip/robot_base.h>
+#include <ecn_manip/robot_kr16.h>
+#include <ecn_manip/robot_turret.h>
+#include <ecn_manip/robot_ur10.h>
 #include <stdexcept>
 #include <visp/vpSubMatrix.h>
 #include <visp/vpSubColVector.h>
