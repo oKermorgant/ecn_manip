@@ -81,7 +81,7 @@ class State:
 
         # follow trajectory from qSet to qDes
         k = 0
-        while (self.cmdCount == cmdCountCur) and not rospy.is_shutdown() and k < len(qTraj[0]):
+        while (self.cmdCount == cmdCountCur) and rclpy.ok() and k < len(qTraj[0]):
             # running setpoint
             self.qSet = [qTraj[i][k] for i in range(N)]
             k = k+1
@@ -102,7 +102,7 @@ class State:
                 qDot[i] = -arm.vel_max[i]
         k = 0
         q0 = self.qSet
-        while (self.cmdCount == cmdCountCur) and not rospy.is_shutdown():
+        while (self.cmdCount == cmdCountCur) and rclpy.ok():
             k = k+1
             # running setpoint
             self.qSet = inJointLimits([q0[i]+k*qDot[i] for i in range(N)])

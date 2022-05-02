@@ -37,7 +37,7 @@ void putAt(vpColVector &_e, const vpColVector &_esub, const unsigned int r)
 std::unique_ptr<ecn::Robot> initRobot(int argc, char ** argv, double rate = 100)
 {
   Node::init(argc, argv);
-  auto node{std::make_unique<Node>(rate)};
+  auto node{std::make_shared<Node>(rate)};
   const auto model{node->robot()};
   const auto name{model->getName()};
 

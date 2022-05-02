@@ -32,6 +32,7 @@ int main(int argc, char ** argv)
     // main control loop
     while(robot->ok())
     {
+
         // current time [s]
         const auto t{robot->time()};
 

@@ -24,8 +24,8 @@ bool inAngleLimits(double &qi, double q_min, double q_max)
 }
 }
 
-Robot::Robot(std::unique_ptr<ecn::Node> &_node, const urdf::Model &model)
-  : node(std::move(_node))
+Robot::Robot(std::shared_ptr<ecn::Node> &_node, const urdf::Model &model)
+  : node(_node)
 {
   // parse robot model
 

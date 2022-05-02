@@ -56,7 +56,8 @@ install(DIRECTORY robots launch
   DESTINATION share/${PROJECT_NAME})
   
 install(DIRECTORY include/ DESTINATION include/)
-  
+
+ament_export_dependencies(urdf tf2_ros)
 ament_export_libraries(ecn_manip)
 ament_export_include_directories(include)
 

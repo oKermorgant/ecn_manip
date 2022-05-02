@@ -35,7 +35,7 @@ public:
   // default, non-ROS constructor for the example
   Robot()  {}
 
-  Robot(std::unique_ptr<Node> &_node, const urdf::Model &model);
+  Robot(std::shared_ptr<Node> &_node, const urdf::Model &model);
   // get number of dof
   inline unsigned int getDofs() const {return dofs;}
 
@@ -131,7 +131,7 @@ protected:
   vpHomogeneousMatrix wMe, fM0;   // constant matrices if needed
 
   // ROS interface
-  std::unique_ptr<Node> node;
+  std::shared_ptr<Node> node;
   uint dofs;
   std::vector<double> q_max, q_min, v_max;
   double t_gt;    // last time we checked the ground truth

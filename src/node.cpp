@@ -60,7 +60,7 @@ double Node::time()
 
 int Node::cycleLength() const
 {
-  return config.switch_time / std::chrono::duration_cast<std::chrono::seconds>(rate.period()).count();
+  return 1e9 * config.switch_time / rate.period().count();
 }
 
 bool Node::ok()
@@ -73,8 +73,8 @@ bool Node::ok()
 void Node::initInterface()
 {
   // initialise ROS topics: publisher for command, subscriber for position measurement
-  cmd_pub = nh->create_publisher<sensor_msgs::msg::JointState>("/main_control/command", 10);
-  desired_pose_pub = nh->create_publisher<std_msgs::msg::Float32MultiArray>("desired_pose", 10);
+  cmd_pub = create_publisher<sensor_msgs::msg::JointState>("/main_control/command", 10);
+  desired_pose_pub = create_publisher<std_msgs::msg::Float32MultiArray>("desired_pose", 10);
   desired_pose.data.resize(6);
 
   position_sub = create_subscription<sensor_msgs::msg::JointState>
