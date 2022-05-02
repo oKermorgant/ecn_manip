@@ -24,10 +24,36 @@ bool inAngleLimits(double &qi, double q_min, double q_max)
 }
 }
 
-Robot::Robot(std::unique_ptr<ecn::Node> &_node)
+Robot::Robot(std::unique_ptr<ecn::Node> &_node, const urdf::Model &model)
   : node(std::move(_node))
 {
-  dofs = node->initRobot(q_max, q_min, v_max);
+  // parse robot model
+
+  std::string cur_link = "tool0";
+  q_max.clear();
+  q_min.clear();
+  v_max.clear();
+  std::vector<string> names;
+
+  while(cur_link != "base_link")
+  {
+    for(const auto &[name, joint]: model.joints_)
+    {
+      if(joint->child_link_name == cur_link)
+      {
+        if(joint->type != urdf::Joint::FIXED)
+        {
+          q_max.insert(q_max.begin(), joint->limits->upper);
+          q_min.insert(q_min.begin(), joint->limits->lower);
+          v_max.insert(v_max.begin(), joint->limits->velocity);
+          names.insert(names.begin(), joint->name);
+        }
+        cur_link = joint->parent_link_name;
+      }
+    }
+  }
+  dofs = q_max.size();
+  node->initInterface(names);
 }
 
 void Robot::checkPose(const vpHomogeneousMatrix &M)

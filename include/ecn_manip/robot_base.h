@@ -35,7 +35,7 @@ public:
   // default, non-ROS constructor for the example
   Robot()  {}
 
-  Robot(std::unique_ptr<Node> &_node);
+  Robot(std::unique_ptr<Node> &_node, const urdf::Model &model);
   // get number of dof
   inline unsigned int getDofs() const {return dofs;}
 

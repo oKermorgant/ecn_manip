@@ -15,75 +15,42 @@ Node::Node(double _rate)
   : rclcpp::Node("control"), nh(this), rate(_rate)
   , tfBuffer(get_clock()), tl(tfBuffer), br(nh)
 {
-  std::string model_urdf;
-  get_parameter("robot_description", model_urdf);
-  std::cout << "Model: " << std::endl << model_urdf << std::endl;
-  urdf::Model model;
-  model.initString(model_urdf);
-  robot_name = model.name_;
 }
 
-uint Node::initRobot(std::vector<double> &q_max, std::vector<double> &q_min,
-                     std::vector<double> &v_max)
+std::unique_ptr<urdf::Model> Node::robot() const
 {
-  std::string model_urdf;
-  get_parameter("robot_description", model_urdf);
-  urdf::Model model;
-  model.initString(model_urdf);
-
-  // find tree from base_link to tool0
-  std::string cur_link = "tool0";
-
-  q_max.clear();
-  q_min.clear();
-  v_max.clear();
-
-  while(cur_link != "base_link")
+  // get robot_description from
+  const auto rsp{std::make_shared<rclcpp::Node>("rsp_reader")};
+  const auto rsp_param{std::make_shared<rclcpp::SyncParametersClient>
+                      (rsp, "/robot_state_publisher")};
+  std::cout << "Reading robot description... " << std::flush;
+  while(true)
   {
-    for(const auto &joint_it : model.joints_)
-    {
-      urdf::JointSharedPtr joint = joint_it.second;
-      if(joint->child_link_name == cur_link)
-      {
-        if(joint->type != urdf::Joint::FIXED)
-        {
-          joint_cmd.name.push_back(joint->name);
-          v_max.push_back(joint->limits->velocity);
-          q_max.push_back(joint->limits->upper);
-          q_min.push_back(joint->limits->lower);
-          dofs += 1;
-        }
-        cur_link = joint->parent_link_name;
-      }
-    }
+    rclcpp::spin_some(rsp);
+    rsp_param->wait_for_service();
+    const auto urdf_xml{rsp_param->get_parameter<std::string>("robot_description")};
+    if(urdf_xml.empty())
+      continue;
+
+
+
+    auto model{std::make_unique<urdf::Model>()};
+    model->initString(urdf_xml);
+    std::cout << " found " << model->getName() << std::endl;
+    return model;
   }
-  std::reverse(joint_cmd.name.begin(), joint_cmd.name.end());
-  std::reverse(q_max.begin(), q_max.end());
-  std::reverse(q_min.begin(), q_min.end());
-  v_max.resize(dofs);
-  std::reverse(v_max.begin(), v_max.end());
-  std::cout << "Found robot description: " << robot_name << " with " << dofs << " DOFs" << std::endl;
+  return {};
+}
 
-  q.resize(dofs);
+void Node::initInterface(const std::vector<std::string> &joints)
+{
+  dofs = joints.size();
+  joint_cmd.name = joints;
   joint_cmd.position.resize(dofs);
-  joint_cmd.velocity.reserve(dofs);
-  desired_pose.data.resize(6);
-  q_max.clear();
-  q_min.clear();
-  v_max.clear();
-
-  std::reverse(q_max.begin(), q_max.end());
-  std::reverse(q_min.begin(), q_min.end());
-  v_max.resize(dofs);
-  std::reverse(v_max.begin(), v_max.end());
-  // std::cout << "Found robot description: " << robot_name << " with " << dofs << " DOFs" << std::endl;
-
+  joint_cmd.velocity.resize(dofs);
   q.resize(dofs);
   desired_pose.data.resize(6);
-
   initInterface();
-
-  return dofs;
 }
 
 double Node::time()
@@ -111,15 +78,15 @@ void Node::initInterface()
   desired_pose.data.resize(6);
 
   position_sub = create_subscription<sensor_msgs::msg::JointState>
-      ("/joint_states", 10, [this](sensor_msgs::msg::JointState::UniquePtr msg)
+                 ("/joint_states", 10, [this](sensor_msgs::msg::JointState::UniquePtr msg)
   {
-      for(unsigned int i=0;i<dofs;++i)
+                 for(unsigned int i=0;i<dofs;++i)
       q[i] = msg->position[i];});
 
 twist_sub = create_subscription<geometry_msgs::msg::Twist>
-    ("gui/twist_manual", 10, [this](geometry_msgs::msg::Twist::UniquePtr msg)
+            ("gui/twist_manual", 10, [this](geometry_msgs::msg::Twist::UniquePtr msg)
 {
-    desired_twist[0] = msg->linear.x;
+            desired_twist[0] = msg->linear.x;
 desired_twist[1] = msg->linear.y;
 desired_twist[2] = msg->linear.z;
 desired_twist[3] = msg->angular.x;
@@ -127,10 +94,10 @@ desired_twist[4] = msg->angular.y;
 desired_twist[5] = msg->angular.z;});
 
 config_sub = create_subscription<sensor_msgs::msg::JointState>
-    ("gui/config", 10, [this](sensor_msgs::msg::JointState::UniquePtr msg)
+             ("gui/config", 10, [this](sensor_msgs::msg::JointState::UniquePtr msg)
 {
-    config.updateFrom(msg->name, msg->position);
-    });
+             config.updateFrom(msg->name, msg->position);
+             });
 
 rclcpp::spin_some(nh);
 }

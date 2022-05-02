@@ -11,6 +11,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
+#include <urdf/model.h>
 
 namespace ecn
 {
@@ -43,9 +44,8 @@ public:
   static void init(int argc, char ** argv);
   Node(double _rate = 100);
   Node(rclcpp::NodeOptions) : Node() {}
-  std::string robotName() const {return robot_name;}
-  uint initRobot(std::vector<double> &q_max, std::vector<double> &q_min,
-                 std::vector<double> &v_max);
+  std::unique_ptr<urdf::Model> robot() const;
+  void initInterface(const std::vector<std::string> &joints);
 
   void setJointPosition(const vpColVector &_q);
   void setJointVelocity(const vpColVector &_velocity, double scale);
