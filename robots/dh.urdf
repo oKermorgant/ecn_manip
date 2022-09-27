@@ -23,13 +23,13 @@
       <mass value="1.0" />
       <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="100.0"  iyz="0.0"  izz="1.0" />
     </inertial>
-    <visual>
+<!--    <visual>
         <origin xyz="0 0 0.1" rpy="0 0 0" />
       <geometry>
         <cylinder length="0.2" radius="0.05"/>
       </geometry>
  <material name="matbase"/>
-    </visual>
+    </visual>-->
  <collision>
         <origin xyz="0 0 0.1" rpy="0 0 0" />
       <geometry>
@@ -45,12 +45,12 @@
       <mass value="1.0" />
       <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="100.0"  iyz="0.0"  izz="1.0" />
     </inertial>
-<visual>
+<!--<visual>
 <geometry>
         <cylinder length="0.05" radius="0.04"/>
 </geometry>
  <material name="mat1"/>
-    </visual>
+    </visual>-->
 </link>
 
 <link name="link2">
@@ -59,12 +59,12 @@
       <mass value="1.0" />
       <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="100.0"  iyz="0.0"  izz="1.0" />
     </inertial>
-<visual>
+<!--<visual>
 <geometry>
         <cylinder length="0.04" radius="0.03"/>
 </geometry>
  <material name="mat2"/>
-    </visual>
+    </visual>-->
 </link>
 
 <link name="link3">
@@ -73,24 +73,24 @@
       <mass value="1.0" />
       <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="100.0"  iyz="0.0"  izz="1.0" />
     </inertial>
-<visual>
+<!--<visual>
         <origin xyz="0 0 -.03" rpy="0 0 0" />
 <geometry>
         <cylinder length="0.06" radius="0.012"/>
 </geometry>
  <material name="mat3"/>
-    </visual>
+    </visual>-->
 </link>
 
 
 <link name="link4">
-<visual>
+<!--<visual>
         <origin xyz="0 0 -0.005" rpy="0 0 0" />
 <geometry>
         <cylinder length="0.15" radius="0.004"/>
 </geometry>
  <material name="mat4"/>
-    </visual>
+    </visual>-->
 </link>
 
 	<joint name="theta" type="revolute">
