@@ -6,12 +6,12 @@
 namespace ecn
 {
 
-struct JointSolution
+struct TwoJoints
 {
     double qi, qj;
 };
 
-typedef std::vector<JointSolution> vectord;
+using TwoJointsCandidate = std::vector<TwoJoints>;
 
 //double solveType1(double x, double y) {return y/x;}
 
@@ -23,17 +23,17 @@ std::vector<double> solveType2(double x, double y, double z);
 std::vector<double> solveType3(double x1, double y1, double z1,
                                double x2, double y2, double z2);
 
-vectord solveType4(double x1, double y1, double x2, double y2);
+TwoJointsCandidate solveType4(double x1, double y1, double x2, double y2);
 
-vectord solveType5(double x1, double y1, double z1,
+TwoJointsCandidate solveType5(double x1, double y1, double z1,
                    double x2, double y2, double z2);
 
-vectord solveType6(double x, double y,
+TwoJointsCandidate solveType6(double x, double y,
                    double z1, double z2, double w);
 
-vectord solveType7(double x, double y, double z1, double z2, double w1, double w2);
+TwoJointsCandidate solveType7(double x, double y, double z1, double z2, double w1, double w2);
 
-vectord solveType8(double x, double y, double z1, double z2);
+TwoJointsCandidate solveType8(double x, double y, double z1, double z2);
 
 }
 

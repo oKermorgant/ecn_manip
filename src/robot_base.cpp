@@ -205,7 +205,7 @@ void Robot::addCandidate(std::vector<double> q_candidate) const
 {
   if(q_candidate.size() != dofs)
   {
-    std::cout << "WARNING in InverseGeometry: adding a candidate with wrong dofs"
+    std::cerr << "WARNING in InverseGeometry: adding a candidate with wrong dofs"
               << std::endl;
   }
   else

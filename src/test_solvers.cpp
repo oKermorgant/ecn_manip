@@ -31,7 +31,7 @@ void print_result(int i, std::vector<double> sol, double qi)
 
 }
 
-void print_result(int i, std::vector<JointSolution> sol, double qi, double qj)
+void print_result(int i, std::vector<TwoJoints> sol, double qi, double qj)
 {
   if(std::count(tests.begin(), tests.end(), i))
   {
