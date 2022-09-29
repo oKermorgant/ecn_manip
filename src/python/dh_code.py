@@ -90,8 +90,9 @@ def load_yaml(filename):
                 this_prism = True
         if type(joint[iTheta]) == str:
             if 'q' in joint[iTheta]:
-                this_prism = False    
-        prism.append(this_prism)
+                this_prism = False
+        if this_prism is not None:
+            prism.append(this_prism)
         for i in range(4):
             if type(joint[i]) == str:
                 joint[i] = parse_expr(joint[i])
@@ -497,6 +498,7 @@ if __name__ == '__main__':
     parser.add_argument('--wrist', action='store_true', help='Prints the model of the wrist to help computing inverse geometry',default=False)
     parser.add_argument('--latex', action='store_true', help='Prints direct model and Jacobian in Latex style',default=False)
     parser.add_argument('--only-DGM', action='store_true', help='Only DGM',default=False)
+    parser.add_argument('--fMe', action='store_true', help='Prints the full fMe transform',default=False)
     parser.add_argument('--eJe', action='store_true', help='Prints the eJe Jacobian',default=False)
     
     args = parser.parse_args()
@@ -613,17 +615,18 @@ if __name__ == '__main__':
             
         print('\n\nCode for the rotation 0R3 from root frame to frame 3:\n')
         exportCpp(T0[2][:3,:3], 'R03')
-            
-            
-    print('\n\nModel from base to end-effector frame fMe for q=0')
+
     I4 = sp.eye(4)
-    O3 = sp.zeros(3,3)
-    def to0(M, q):
-        return M.subs(sp.Symbol(f'q{q}'), 0)
     
     fMe = (fM0 if fM0 is not None else I4) * T0[-1] * (wMe if wMe is not None else I4)
-    for n in range(len(T0)):
-        fMe = to0(fMe, n+1)
+    if args.fMe:
+        print('\n\nModel from base to end-effector frame fMe')
+    else:
+        print('\n\nModel from base to end-effector frame fMe for q=0')
+        for n in range(len(T0)):
+            fMe = fMe.subs(sp.Symbol(f'q{n}'), 0)
+
+    fMe = simp_matrix(fMe)
     sp.pretty_print(fMe)
                 
     if args.latex:
@@ -632,9 +635,10 @@ if __name__ == '__main__':
             
         print('\n\nJacobian:')
         better_latex(all_J[-1])
+
         
     if args.eJe:
-        
+        O3 = sp.zeros(3,3)
         def from_blocks(A,B,C,D):
             return (A.row_join(B)).col_join(C.row_join(D))
         
