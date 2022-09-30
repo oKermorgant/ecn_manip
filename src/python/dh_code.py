@@ -220,8 +220,15 @@ def parse_urdf(filename, base_frame, ee_frame, use_joint_names = False):
     for k, joint in enumerate(joints):
         
         # get this transform
-        xyz = simp_val(joint.find('origin').get('xyz').split(' '), k+1)
-        rpy = simp_rpy(joint.find('origin').get('rpy').split(' '))
+        try:
+            xyz = simp_val(joint.find('origin').get('xyz').split(' '), k+1)
+        except:
+            xyz = sympy.zeros(3,1)
+        try:
+            rpy = simp_rpy(joint.find('origin').get('rpy').split(' '))
+        except:
+            rpy = sympy.zeros(3,1)
+        
         Mi = Homogeneous(xyz, Rxyz(rpy))
         # get quaternion
         
@@ -467,8 +474,8 @@ def better_latex(M):
     s = sympy.latex(M)
     s = s.replace('\\cos', 'c').replace('\\sin', 's')
     n = max([i for i in range(1,10) if '_{'+str(i)+'}' in s])
-    single = '{{\\left (q_{{{}}} \\right )}}'
-    double = '{{\\left (q_{{{}}} + q_{{{}}} \\right )}}'
+    single = '{{\\left(q_{{{}}} \\right)}}'
+    double = '{{\\left(q_{{{}}} + q_{{{}}} \\right)}}'
     for i1 in range(1, n+1):
         s = s.replace(single.format(i1), '_{}'.format(i1))
         for i2 in range(1,n):
@@ -495,6 +502,7 @@ if __name__ == '__main__':
     parser.add_argument('--wrist', action='store_true', help='Prints the model of the wrist to help computing inverse geometry',default=False)
     parser.add_argument('--latex', action='store_true', help='Prints direct model and Jacobian in Latex style',default=False)
     parser.add_argument('--only-DGM', action='store_true', help='Only DGM',default=False)
+    parser.add_argument('--eJe', action='store_true', help='Prints the eJe Jacobian',default=False)
     
     args = parser.parse_args()
 
@@ -614,10 +622,13 @@ if __name__ == '__main__':
             
     print('\n\nModel from base to end-effector frame fMe for q=0')
     I4 = sympy.eye(4)        
+    O3 = sympy.zeros(3,3)
+    def to0(M, q):
+        return M.subs(sympy.Symbol(f'q{q}'), 0)
+    
     fMe = (fM0 if fM0 is not None else I4) * T0[-1] * (wMe if wMe is not None else I4)
     for n in range(len(T0)):
-        q = sympy.Symbol(f'q{n+1}')
-        fMe = fMe.subs(q, 0)
+        fMe = to0(fMe, n+1)
     sympy.pretty_print(fMe)
                 
     if args.latex:
@@ -626,3 +637,18 @@ if __name__ == '__main__':
             
         print('\n\nJacobian:')
         better_latex(all_J[-1])
+        
+    if args.eJe:
+        
+        def from_blocks(A,B,C,D):
+            return (A.row_join(B)).col_join(C.row_join(D))
+        
+        eMw = wMe.inv() if wMe is not None else I4
+        eTw = eMw[:3,[3]]
+        eRw = eMw[:3,:3]
+        eWw = from_blocks(eRw, sk(eTw)*eRw, O3, eRw)
+        wRf = ((fM0 if fM0 is not None else I4) * T0[-1])[:3,:3].T
+        wRRf = from_blocks(wRf, O3, O3, wRf)
+        eJe = eWw * wRRf * all_J[-1]
+        print('\neJe:')
+        exportCpp(eJe, 'J')

@@ -21,18 +21,14 @@ catkin_package(
 include_directories(src ${VISP_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 
 # main library
-add_library(ecn_manip src/robot_base.h src/robot_base.cpp src/robot_init.h
-            src/trig_solvers.h src/trig_solvers.cpp
-            src/ur_kin/ur_kin.h src/ur_kin/ur_kin.cpp
-            src/node.cpp src/node.h)
-
+add_library(ecn_manip src/robot_base.cpp src/trig_solvers.cpp src/ur_kin/ur_kin.cpp src/node.cpp)
 target_link_libraries(ecn_manip ${VISP_LIBRARIES} ${catkin_LIBRARIES})
 
 # Main executable
 add_executable(control control.cpp
-              src/robot_turret.h robot_turret.cpp
-               src/robot_ur10.h robot_ur10.cpp
-               src/robot_kr16.h robot_kr16.cpp
+              robot_turret.cpp
+               robot_ur10.cpp
+               robot_kr16.cpp
                )
 target_link_libraries(control ecn_manip)
 

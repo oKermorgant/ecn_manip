@@ -15,6 +15,7 @@ vpHomogeneousMatrix ecn::RobotKr16::fMw(const vpColVector &q) const
     vpHomogeneousMatrix M;
 
 
+
     return M;
 }
 
@@ -22,8 +23,11 @@ vpHomogeneousMatrix ecn::RobotKr16::fMw(const vpColVector &q) const
 // Inverse Geometry
 vpColVector ecn::RobotKr16::inverseGeometry(const vpHomogeneousMatrix &fMe_des, const vpColVector &q0) const
 {
-    // desired wrist pose
-    vpHomogeneousMatrix fMw = fMe_des * wMe.inverse();
+    // build corresponding oMw and explode into 12 elements
+    const auto [xx,xy,xz,yx,yy,yz,zx,zy,zz,tx,ty,tz] = explodeMatrix(fMe_des);
+
+
+    // TODO add candidates
 
 
 

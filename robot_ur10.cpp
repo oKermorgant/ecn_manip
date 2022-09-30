@@ -19,7 +19,7 @@ vpHomogeneousMatrix ecn::RobotUR10::fMw(const vpColVector &q) const
 }
 
 
-// Inverse Geometry is already given for this robot
+// Inverse Geometry is already given for this robot!
 
 
 // Wrist Jacobian

@@ -32,6 +32,7 @@ Robot::Robot(std::unique_ptr<ecn::Node> &_node)
 
 void Robot::checkPose(const vpHomogeneousMatrix &M)
 {
+  static auto t_gt{0.};
   displayFrame(M);
   if(node->time() - t_gt > 1)
   {
@@ -64,7 +65,7 @@ vpHomogeneousMatrix Robot::intermediaryPose(vpHomogeneousMatrix M1, vpHomogeneou
 // set articular position
 void Robot::setJointPosition(const vpColVector &_position)
 {
-  if(mode() == MODE_VELOCITY_P2P || mode() == MODE_VELOCITY_MANUAL)
+  if(mode() == ControlMode::VELOCITY_P2P || mode() == ControlMode::VELOCITY_MANUAL)
     return;
 
   if(_position.getRows() != dofs)
@@ -78,29 +79,26 @@ void Robot::setJointPosition(const vpColVector &_position)
 vpColVector Robot::iterativeIK(const vpHomogeneousMatrix &fMe_des, vpColVector q0) const
 {
   const uint max_iter(1000);
-  const double min_error = 1e-4;
-  uint iter(0);
-  const double l = 0.15;
+  const double min_lin_error = 1e-4;
+  const double min_ang_error = 1e-3;
+  const double lambda = 0.15;
 
   const auto fMw_d = fMe_des * wMe.inverse();
 
   auto M = fMw(q0);
 
   vpColVector v(6);
-  vpSubColVector t(v, 0, 3);
-  vpSubColVector tu(v, 3, 3);
-
   vpPoseVector p(M.inverse()*fMw_d);
 
+  uint iter(0);
   while(iter++ < max_iter &&
-        (p.getTranslationVector().frobeniusNorm() > min_error ||
-         std::abs(p.getThetaUVector().getTheta()) > 1e-3))
+        (p.getTranslationVector().frobeniusNorm() > min_lin_error ||
+         std::abs(p.getThetaUVector().getTheta()) > min_ang_error))
   {
-
-
-    t = M.getRotationMatrix() * p.getTranslationVector();
-    tu = M.getRotationMatrix() * static_cast<vpColVector>(p.getThetaUVector());
-    q0 += l * fJw(q0).t() * v;
+    const auto R{M.getRotationMatrix()};
+    v.insert(0, R * p.getTranslationVector());
+    v.insert(3, R * static_cast<vpColVector>(p.getThetaUVector()));
+    q0 += lambda * fJw(q0).t() * v;
     M = fMw(q0);
     p.buildFrom(M.inverse() * fMw_d);
   }
@@ -110,7 +108,7 @@ vpColVector Robot::iterativeIK(const vpHomogeneousMatrix &fMe_des, vpColVector q
 // set articular velocity
 void Robot::setJointVelocity(const vpColVector &_velocity)
 {
-  if(mode() != MODE_VELOCITY_P2P && mode() != MODE_VELOCITY_MANUAL)
+  if(mode() != ControlMode::VELOCITY_P2P && mode() != ControlMode::VELOCITY_MANUAL)
     return;
 
   if(_velocity.getRows() != dofs)
@@ -119,11 +117,10 @@ void Robot::setJointVelocity(const vpColVector &_velocity)
     return;
   }
   // if v_max_, scales velocity (educational goal)
-  unsigned int i;
   double scale = 1.;
-  if(v_max.size()!=0)
+  if(!v_max.empty())
   {
-    for(i=0;i<dofs;++i)
+    for(uint i=0;i<dofs;++i)
       scale = std::max(scale, std::abs(_velocity[i])/v_max[i]);
     if(scale > 1)
     {
@@ -131,7 +128,7 @@ void Robot::setJointVelocity(const vpColVector &_velocity)
       std::cout << "scaling v: " << scale << std::endl;
     }
   }
-  node->setJointVelocity(_velocity, scale);
+  node->setJointVelocity(scale*_velocity);
 }
 
 // loop function

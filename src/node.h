@@ -45,7 +45,7 @@ public:
                  std::vector<double> &v_max);
 
   void setJointPosition(const vpColVector &_q);
-  void setJointVelocity(const vpColVector &_velocity, double scale);
+  void setJointVelocity(const vpColVector &_velocity);
   vpColVector jointPosition() const;
   void setDesiredPose(const vpPoseVector &_pose);
 
@@ -61,7 +61,7 @@ public:
   vpColVector twist;
   uint dofs = 0;
   std::vector<double> q;
-  vpColVector desired_twist = vpColVector(6);
+  vpColVector desired_screw = vpColVector(6);
   std::vector<std::string> names;
   std::string robot_name;
 
@@ -83,12 +83,12 @@ private:
   void onReadPosition(const sensor_msgs::JointState::ConstPtr& _msg);
   void onReadTwist(const geometry_msgs::Twist &_msg)
   {
-    desired_twist[0] = _msg.linear.x;
-    desired_twist[1] = _msg.linear.y;
-    desired_twist[2] = _msg.linear.z;
-    desired_twist[3] = _msg.angular.x;
-    desired_twist[4] = _msg.angular.y;
-    desired_twist[5] = _msg.angular.z;
+    desired_screw[0] = _msg.linear.x;
+    desired_screw[1] = _msg.linear.y;
+    desired_screw[2] = _msg.linear.z;
+    desired_screw[3] = _msg.angular.x;
+    desired_screw[4] = _msg.angular.y;
+    desired_screw[5] = _msg.angular.z;
   }
   void onReadConfig(const sensor_msgs::JointState::ConstPtr& _msg)
   {

@@ -19,10 +19,10 @@
   
   As it is not a lab on C++, most of the code is already written and you only have to fill the required functions:
   \begin{itemize}
-    \item \texttt{Robot::init\_wMe()} to initialize the fixed transform between the wrist and end-effector
-    \item \texttt{Robot::fMw(q)} for the direct geometric model wrist-to-fixed frame
-    \item \texttt{Robot::inverseGeometry(M)} for...well, the inverse geometry
-    \item \texttt{Robot::fJw} for the kinematic model wrist-to-fixed frame
+    \item \okttt{Robot::init_wMe()} to initialize the fixed transform between the wrist and end-effector
+    \item \okttt{Robot::fMw(q)} for the direct geometric model wrist-to-fixed frame
+    \item \okttt{Robot::inverseGeometry(M)} for...well, the inverse geometry
+    \item \okttt{Robot::fJw} for the kinematic model wrist-to-fixed frame
   \end{itemize}
   
   \subsection{Installing and loading the lab in Qt Creator}
@@ -30,12 +30,12 @@
   This project uses the ROS\footnote{Robot Operating System, http://www.ros.org} framework which imposes some particular steps to configure the environment. An actual ROS course will be held in the second semester, for now just configure as follows:
   
   \begin{enumerate}
-    \item Open a terminal and create (if needed) a ROS workspace: \texttt{mkdir -p $\sim$/ros/src}
-    \item Go inside this folder \texttt{cd $\sim$/ros/src}
-    \item Download this repository: \texttt{git clone https://github.com/oKermorgant/ecn\_manip}.
-    \item Compile the workspace: \texttt{cd .. \&\& catkin build}
-    \item Create the QtCreator configuration file: \texttt{cd src/ecn\_manip \&\& gqt}
-    \item Open QtCreator and load the \texttt{$\sim$/ros/src/ecn\_manip/CMakeLists.txt} file
+    \item Open a terminal and create (if needed) a ROS workspace: \okttt{mkdir -p \~/ros/src}
+    \item Go inside this folder \okttt{cd \~/ros/src}
+    \item Download this repository: \okttt{git clone https://github.com/oKermorgant/ecn_manip}.
+    \item Compile the workspace: \okttt{cd .. \&\& catkin build}
+    \item Create the QtCreator configuration file: \okttt{cd src/ecn_manip \&\& gqt}
+    \item Open QtCreator and load the \okttt{\~/ros/src/ecn_manip/CMakeLists.txt} file
     \item The files should be displayed and ready to run
     \item Compilation is done by clicking the bottom-left hammer
     \item Run your program with the green triangle. It can be stopped by clicking on the red square
@@ -45,10 +45,10 @@
   
   The {\bf only} files to be modified are:
   \begin{itemize}
-    \item \texttt{control.cpp}: main file where the control is done depending on the current robot mode
-    \item \texttt{robot\_turret.cpp}: model of the RRP turret robot
-    \item \texttt{robot\_kr16.cpp}: model of the industrial Kuka KR16 robot
-    \item \texttt{robot\_ur10.cpp}: model of the Universal Robot UR-10
+    \item \okttt{control.cpp}: main file where the control is done depending on the current robot mode
+    \item \okttt{robot_turret.cpp}: model of the RRP turret robot
+    \item \okttt{robot_kr16.cpp}: model of the industrial Kuka KR16 robot
+    \item \okttt{robot_ur10.cpp}: model of the Universal Robot UR-10
   \end{itemize}
   We will use the ViSP\footnote{Visual Servoing Platform, http://visp.inria.fr} library to manipulate mathematical vectors and matrices, including frame transforms, rotations, etc. The main classes are detailed in Appendix \ref{visp}.\\
   At the end of the lab, you should upload them through the \link{http://pagesperso.ls2n.fr/~kermorgant-o/student links.php}{portal on my website}
@@ -128,7 +128,7 @@
   
   \subsection*{The main code}
   
-  In the file \texttt{control.cpp}, the \texttt{if - else if} blocks correspond to the 6 exercises to be done for each robot. Note that if they work for the Turret robot, then 
+  In the file \okttt{control.cpp}, the \okttt{if - else if} blocks correspond to the 6 exercises to be done for each robot. Note that if they work for the Turret robot, then 
   they should work for all robots as long as the model is correct. \\
   The current exercise is changed by using the buttons in the GUI.
   
@@ -136,26 +136,26 @@
   
   In this exercise, the robot follows the manually given joint positions. The task is to build and print the direct geometric model, depending on the current value of $\q$. This is to be done in two functions:
   \begin{itemize}
-    \item \texttt{Robot::init\_wMe()} where you have to write the constant matrix $\wMe$ from the end-effector to the wrist frame
-    \item \texttt{Robot::fMw(q)}  where you have to write and return the transform $\M$ between the fixed and wrist frame
+    \item \okttt{Robot::init_wMe()} where you have to write the constant matrix $\wMe$ from the end-effector to the wrist frame
+    \item \okttt{Robot::fMw(q)}  where you have to write and return the transform $\M$ between the fixed and wrist frame
   \end{itemize}
-  Once you have computed the \texttt{M} matrix, the code calls \texttt{robot->checkPose(M);} in order to print both your matrix and the true one. No need to tell that they should be equal.\\
+  Once you have computed the \okttt{M} matrix, the code calls \okttt{robot->checkPose(M);} in order to print both your matrix and the true one. No need to tell that they should be equal.\\
   What can be told is that it is useless to continue until they are.
   
   \subsection*{Exercise 2: Checking the Direct Kinematic Model (Jacobian)}
   
-  If you select \texttt{Manual Operational Velocity} in the GUI then the sliders allow you to give a desired operational velocity (ie twist) for the end-effector.\\
+  If you select \okttt{Manual Operational Velocity} in the GUI then the sliders allow you to give a desired operational velocity (ie twist) for the end-effector.\\
   This velocity is ${}^e\v_e$ and is defined in the end-effector frame.\\
-  The robot Jacobian has to be defined in the function \texttt{Robot::fJw(q)} that should return the Jacobian of the wrist in the fixed frame.\\
+  The robot Jacobian has to be defined in the function \okttt{Robot::fJw(q)} that should return the Jacobian of the wrist in the fixed frame.\\
   
   
   In the main code, the commanded velocity then to be mapped to the joint velocity in two steps:
   \begin{enumerate}
     \item Map to the fixed frame: ${}^f\mathbf{v}_e^* = \left[\begin{array}{cc}{}^f\R_e & 0 \\ 0 & {}^f\R_e\end{array}\right]{}^e\mathbf{v}_e^*$\\
-    Call \texttt{M.getRotationMatrix()} to get this rotation.\\
-    The \texttt{ecn::putAt} function may be of good use.
+    Call \okttt{M.getRotationMatrix()} to get this rotation.\\
+    The \okttt{ecn::putAt} function may be of good use.
     \item Map to the joint space: $\dot\q = \J^+.{}^f\mathbf{v}_e^*$\\
-    Call \texttt{robot->fJe(q).pseudoInverse()} to get the Jacobian pseudo-inverse
+    Call \okttt{robot->fJe(q).pseudoInverse()} to get the Jacobian pseudo-inverse
   \end{enumerate}
   You can check that the end-effector is able to follow straight 3D lines in x, y or z direction in its own frame.
   Similarly, it should be able to rotate around x, y or z. This means the Jacobian computation is correct.
@@ -163,33 +163,33 @@
   \newpage
   \subsection*{Exercise 3: Checking the Inverse Geometric Model}
   
-  If you select \texttt{Direct point-to-point} in the GUI then the robot will receive two operational setpoints, at a given sampling time that can be changed with the \texttt{Switching time} slider in the GUI. The current setpoint is in the matrix \texttt{Md} and its corresponding joint position is in the vector \texttt{qf}. 
+  If you select \okttt{Direct point-to-point} in the GUI then the robot will receive two operational setpoints, at a given sampling time that can be changed with the \okttt{Switching time} slider in the GUI. The current setpoint is in the matrix \okttt{Md} and its corresponding joint position is in the vector \okttt{qf}. 
   
-  Nothing has to be done in the main code, but of course the \texttt{Robot::inverseGeometry(M)} function has to be filled in order to compute the actual inverse geometry solution. The robot will try to have all joints reach their desired value as soon as possible, which will lead to a discontinuous motion.\\
+  Nothing has to be done in the main code, but of course the \okttt{Robot::inverseGeometry(M)} function has to be filled in order to compute the actual inverse geometry solution. The robot will try to have all joints reach their desired value as soon as possible, which will lead to a discontinuous motion.\\
   
   In practice, this exercise is to check that the Inverse Geometric Model is correct: the robot should reach the desired pose.\\
   
-  When computing the inverse geometry, try to find a solution as near as possible to the passed \texttt{q0}.\\
+  When computing the inverse geometry, try to find a solution as near as possible to the passed \okttt{q0}.\\
   
   Many useful functions are available to solve classical trigonometric equations. They are detailed in Appendix \ref{trigsolve}.\\
   
-  A given potential solution should be stored using \texttt{addCandidate(\{q1, q2, ..., qn\});}\\ At the end of the Inverse Geometry function, use \texttt{return bestCandidate(q0);} that will pick the candidate that is the nearest from the current joint position and also within joint limits.
+  A given potential solution should be stored using \okttt{addCandidate(\{q1, q2, ..., qn\});}\\ At the end of the Inverse Geometry function, use \okttt{return bestCandidate(q0);} that will pick the candidate that is the nearest from the current joint position and also within joint limits.
   
   \subsection*{Exercise 4: Interpolated point-to-point control}
   
-  In this exercise the previous pose setpoint \texttt{M0} and its corresponding joint position \texttt{q0} should be used to interpolate the joint positions.\\
+  In this exercise the previous pose setpoint \okttt{M0} and its corresponding joint position \okttt{q0} should be used to interpolate the joint positions.\\
   
-  Here the goal is to compute the current setpoint $\q_c = \q_0 + p(t)(\q_f-\q_0)$. The interpolation function $p(t)$ was defined during the lectures and should take into account the maximum joint velocity and acceleration that are stored in the \texttt{vMax} and \texttt{aMax} vectors. Basically this amounts to computing the minimum time \texttt{tf} needed to reach $\q_f$ from $\q_0$. This computation should be done in the \texttt{if(robot->newRef())} and then used to compute the current \texttt{qCommand}.
+  Here the goal is to compute the current setpoint $\q_c = \q_0 + p(t)(\q_f-\q_0)$. The interpolation function $p(t)$ was defined during the lectures and should take into account the maximum joint velocity and acceleration that are stored in the \okttt{vMax} and \okttt{aMax} vectors. Basically this amounts to computing the minimum time \okttt{tf} needed to reach $\q_f$ from $\q_0$. This computation should be done in the \okttt{if(robot->newRef())} and then used to compute the current \okttt{qCommand}.
   
   
   \subsection*{Exercise 5: Operational control through Inverse Geometric Model}
   
   Exercises 3 and 4 lead to the correct pose but not in a straight 3D line. Indeed the robot is only controlled in the joint space with no constraints between the two extreme poses.\\
   In this exercise, the goal is to perform the interpolation not in the joint space but in the Cartesian space. In practice, we will compute many poses between 
-  \texttt{M0} and \texttt{Md} and command the robot to reach sequentially all these poses. As they will be pretty close one from each other, the resulting motion 
+  \okttt{M0} and \okttt{Md} and command the robot to reach sequentially all these poses. As they will be pretty close one from each other, the resulting motion 
   will be close to a straight line.
   
-  The \texttt{robot->intermediaryPose(M0, Md, alpha)} function returns a pose between \texttt{M0} and \texttt{Md}, where \texttt{alpha} is between 0 and 1 and should be computed from $t$, $t_0$ and $t_f$ = 1 s.
+  The \okttt{robot->intermediaryPose(M0, Md, alpha)} function returns a pose between \okttt{M0} and \okttt{Md}, where \okttt{alpha} is between 0 and 1 and should be computed from $t$, $t_0$ and $t_f$ = 1 s.
   
   Then, the inverse geometry of this pose should be sent to the robot as joint position setpoint.
   
@@ -202,13 +202,13 @@
   \begin{enumerate}
     \item Compute the pose error in the desired frame: ${}^{e*}\M_e = {}^{f}\M_{e*}^{-1}.{}^{f}\M_e$
     \begin{itemize}
-      \item in the code, ${}^{f}\M_{e*}$ corresponds to \texttt{Md} and ${}^{f}\M_e$ to \texttt{M} 
-      \item In practice we use the $(\mathbf{t}, \theta\u)$ representation with \texttt{p.buildFrom()}
+      \item in the code, ${}^{f}\M_{e*}$ corresponds to \okttt{Md} and ${}^{f}\M_e$ to \okttt{M} 
+      \item In practice we use the $(\mathbf{t}, \theta\u)$ representation with \okttt{p.buildFrom()}
     \end{itemize}
     \item Compute the desired linear and angular velocities: $v = -\lambda{}^{f}\M_{e*}\mathbf{t}$, \quad $\omega = -\lambda{}^{f}\M_{e} (\theta\u)$
     \item Map these velocities to the joint space: $\dot\q = \J^+ \left[\begin{array}{c}v\\\omega\end{array}\right]$
   \end{enumerate}
-  $\lambda$ is a gain that can be changed from the GUI. Increasing it will lead to a faster convergence. It can be obtained through \texttt{robot->lambda()}.
+  $\lambda$ is a gain that can be changed from the GUI. Increasing it will lead to a faster convergence. It can be obtained through \okttt{robot->lambda()}.
   
   
   
@@ -223,14 +223,14 @@
   The full documentation is here: \link{http://visp-doc.inria.fr/doxygen/visp-3.1.0/classes.html}{http://visp-doc.inria.fr/doxygen/visp-3.1.0/classes.html}.\\
   The main classes to be used are:
   \begin{itemize}
-    \item \texttt{vpMatrix}: a classical matrix of given dimensions, can be multiplied with other matrices and vectors if the dimensions are ok. The pseudo-inverse of matrix \texttt{M} 
-    is available with \texttt{M.pseudoInverse()}
-    \item \texttt{vpColVector}: a column vector of given dimension
-    \item \texttt{vpHomogeneousMatrix}: the classical $4\times 4$ 3D transform matrix
+    \item \okttt{vpMatrix}: a classical matrix of given dimensions, can be multiplied with other matrices and vectors if the dimensions are ok. The pseudo-inverse of matrix \okttt{M} 
+    is available with \okttt{M.pseudoInverse()}
+    \item \okttt{vpColVector}: a column vector of given dimension
+    \item \okttt{vpHomogeneousMatrix}: the classical $4\times 4$ 3D transform matrix
   \end{itemize}
   Most of the model computation is about initializing a matrix or vector to correct dimensions (which is already done) and fill its elements with formulae.\\
-  To write 1 at element (i,j) of matrix M, just write \texttt{M[i][j] = 1;}\\
-  Similarly, to write 1 at element (i) of vector q, just write \texttt{q[i] = 1;}\\
+  To write 1 at element (i,j) of matrix M, just write \okttt{M[i][j] = 1;}\\
+  Similarly, to write 1 at element (i) of vector q, just write \okttt{q[i] = 1;}\\
   
   3D transforms can be easily changed between homogeneous matrix, rotation matrix, translation vector or $\theta\u$ vector. Another type called a pose vector
   consists in the full $(\mathbf{t}, \theta\u)$ vector of dimension 6:
@@ -256,8 +256,8 @@
   
   Two utility functions are provided to put a matrix or vector into a bigger one:
   \begin{itemize}
-    \item \texttt{void ecn::putAt(M, Ms, r, c)}: Writes matrix \texttt{Ms} inside matrix \texttt{M}, starting from given row and column.
-    \item \texttt{void ecn::putAt(V, Vs, r)}: Writes column vector \texttt{Vs} inside vector \texttt{V}, starting from given row. These two functions do nothing but print an error
+    \item \okttt{void ecn::putAt(M, Ms, r, c)}: Writes matrix \okttt{Ms} inside matrix \okttt{M}, starting from given row and column.
+    \item \okttt{void ecn::putAt(V, Vs, r)}: Writes column vector \okttt{Vs} inside vector \okttt{V}, starting from given row. These two functions do nothing but print an error
     if the submatrix or vector does not fit in the main one.
   \end{itemize}
   
@@ -267,7 +267,7 @@
   
   The core of robot modeling is to build the MDH table. From this, the DGM and KM can be derived automatically. The Inverse Geometry still has to be done by hand (even if some advanced tools allow code-generation for the IG resolution).
   
-  As it is quite tedious to have to compute all matrices when a solution of MDH is investigated, a tool is provided to generate the C++ code. An example can be found in the file \texttt{dh\_example.yml}:
+  As it is quite tedious to have to compute all matrices when a solution of MDH is investigated, a tool is provided to generate the C++ code. An example can be found in the file \okttt{dh_example.yml}:
   \cppstyle
   \begin{lstlisting}
   notation: [alpha, a, theta, r]
@@ -277,7 +277,7 @@
   3: [pi/2, 0, q3, r3]
   4: [-pi/2, a4, q4+pi/2, 0]
   \end{lstlisting}
-  The command to be run is: \texttt{rosrun ecn\_manip dh\_code.py <name of the file>}.\\
+  The command to be run is: \okttt{rosrun ecn_manip dh_code.py <name of the file>}.\\
   In the case of the above MDH table, it leads to these outputs:
   
   \begin{minipage}{.45\linewidth}
@@ -349,10 +349,10 @@
   \end{minipage}
   This is exactly what you would get by doing the manual computation from the initial table, which I hope is quite appreciated.\\
   
-  Fixed transforms for initial and end-effector frames can also be written with keys \texttt{f:} and \texttt{e:}\\
+  Fixed transforms for initial and end-effector frames can also be written with keys \okttt{f:} and \okttt{e:}\\
   
-  If passing \texttt{--display} the script will display the direct geometry with classical math notations. It can be useful for the inverse geometry computation.\\
-  For a 6-DOF robot, passing \texttt{--wrist} will display useful information to benefit from a spherical wrist: math expressions for $\Pass{0}{\mathbf{t}}{6}(q_1,q_2,q_3)$ and  $\Pass{3}{\R}{6}(q_4,q_5,q_6)$, and code for $\Pass{0}{\R}{3}(q_1,q_2,q_3)$.
+  If passing \okttt{--display} the script will display the direct geometry with classical math notations. It can be useful for the inverse geometry computation.\\
+  For a 6-DOF robot, passing \okttt{--wrist} will display useful information to benefit from a spherical wrist: math expressions for $\Pass{0}{\mathbf{t}}{6}(q_1,q_2,q_3)$ and  $\Pass{3}{\R}{6}(q_4,q_5,q_6)$, and code for $\Pass{0}{\R}{3}(q_1,q_2,q_3)$.
   
   \newpage
   \section{Trigonometric solvers}\label{trigsolve}
@@ -360,7 +360,7 @@
   The code contains solvers for all types of trigonometric equations (except type 1 that is obvious).\\
   They take as argument the coefficients of the equations. They return:
   \begin{itemize}
-    \item A \texttt{std::vector<double>} for equations of 1 unknown (types 2 \& 3).\\We can go through the valid solutions with:
+    \item A \okttt{std::vector<double>} for equations of 1 unknown (types 2 \& 3).\\We can go through the valid solutions with:
     \cppstyle
     \begin{lstlisting}
     // assume q1 should ensure type 2: X.sin(q1) + Y.cos(q1) = Z
@@ -370,7 +370,7 @@
     // here q1 is a valid solution, may be used to deduce other joint values
     }
     \end{lstlisting}
-    \item A \texttt{std::vector<JointSolution>} for equations of 2 unknowns (types 4 to 8).\\In this case, the valid solutions can be explored with:
+    \item A \okttt{std::vector<JointSolution>} for equations of 2 unknowns (types 4 to 8).\\In this case, the valid solutions can be explored with:
     \cppstyle
     \begin{lstlisting}
     // assume q1 and q2 should ensure type 6 equation: 
@@ -403,16 +403,16 @@ This function output the matrix terms according to:
   \begin{tabular}{|c|c|C{7cm}|C{2cm}|}\hline
     Type & Equation & Syntax & Returns (vector of)\\\hline
     1 & $Xq_i = Y$& does not exist &$q_i$	\\\hline		
-    2 & $Xs_i+Yc_i = Z$ & \texttt{solveType2(x, y, z)}&$q_i$\\\hline
-    3 & $\begin{array}{l}X_1s_i+Y_1c_i = Z_1 \\ X_2s_i+Y_2c_i = Z_2\end{array}$&\texttt{solveType3(x1, y1, z1,
+    2 & $Xs_i+Yc_i = Z$ & \okttt{solveType2(x, y, z)}&$q_i$\\\hline
+    3 & $\begin{array}{l}X_1s_i+Y_1c_i = Z_1 \\ X_2s_i+Y_2c_i = Z_2\end{array}$&\okttt{solveType3(x1, y1, z1,
       x2, y2, z2)} &$q_i$\\\hline
-    4 & $\begin{array}{l}X_1q_js_i = Y_1 \\ X_2q_jc_i = Y_2\end{array}$& \texttt{solveType4(x1, y1, x2, y2)}&$(q_i,q_j)$ \\\hline
-    5 & $\begin{array}{l}X_1s_i = Y_1+Z_1q_j \\ X_2c_i = Y_2+Z_2q_j\end{array}$& \texttt{solveType5(x1, y1, z1,
+    4 & $\begin{array}{l}X_1q_js_i = Y_1 \\ X_2q_jc_i = Y_2\end{array}$& \okttt{solveType4(x1, y1, x2, y2)}&$(q_i,q_j)$ \\\hline
+    5 & $\begin{array}{l}X_1s_i = Y_1+Z_1q_j \\ X_2c_i = Y_2+Z_2q_j\end{array}$& \okttt{solveType5(x1, y1, z1,
       x2, y2, z2)}&$(q_i,q_j)$\\\hline			
-    6 & $\begin{array}{l}Ws_j = Xc_i + Ys_i+Z_1 \\ Wc_j = Xs_i - Yc_i+Z_2\end{array}$& \texttt{solveType6(x, y,
+    6 & $\begin{array}{l}Ws_j = Xc_i + Ys_i+Z_1 \\ Wc_j = Xs_i - Yc_i+Z_2\end{array}$& \okttt{solveType6(x, y,
       z1, z2, w)}&$(q_i,q_j)$\\\hline
-    7 & $\begin{array}{l}W_1c_j +W_2s_j = Xc_i + Ys_i+Z_1 \\ W_1s_j -W_2c_j = Xs_i - Yc_i+Z_2\end{array}$& \texttt{solveType7(x, y, z1, z2, w1, w2)}&$(q_i,q_j)$\\\hline
-    8 &$\begin{array}{l}Xc_i+Yc_{ij} =Z_1 \\ Xs_i+Ys_{ij} =Z_2\end{array}$ & \texttt{solveType8(x, y, z1, z2)}&$(q_i,q_j)$\\\hline
+    7 & $\begin{array}{l}W_1c_j +W_2s_j = Xc_i + Ys_i+Z_1 \\ W_1s_j -W_2c_j = Xs_i - Yc_i+Z_2\end{array}$& \okttt{solveType7(x, y, z1, z2, w1, w2)}&$(q_i,q_j)$\\\hline
+    8 &$\begin{array}{l}Xc_i+Yc_{ij} =Z_1 \\ Xs_i+Ys_{ij} =Z_2\end{array}$ & \okttt{solveType8(x, y, z1, z2)}&$(q_i,q_j)$\\\hline
   \end{tabular}
   
   

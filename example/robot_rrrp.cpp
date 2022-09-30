@@ -47,7 +47,7 @@ vpHomogeneousMatrix ecn::RobotRRRP::fMw(const vpColVector &q) const
 
 
 
-//#define MANIP_2021
+#define MANIP_2021
 
 #ifdef MANIP_2021
 
@@ -57,60 +57,38 @@ vpColVector ecn::RobotRRRP::inverseGeometry(const vpHomogeneousMatrix &fMe_des, 
   // elements of target DGM matrix (new in 2021!)
   const auto [xx,xy,xz,yx,yy,yz,zx,zy,zz,tx,ty,tz] = explodeMatrix(fMe_des);
 
-      const double r1 = 0.27;
-      const double a2 = 0.2;
-      const double r3 = 0.15;
+  vpHomogeneousMatrix M;
+  auto t = M.getTranslationVector();
+  auto theta_u = M.getThetaUVector();
 
-      // start by solving q3
-      for(const double q3: solveType3(1, 0, xz, 0, -1, zz))
+  const double r1 = 0.27;
+  const double a2 = 0.2;
+  const double r3 = 0.15;
+
+  // start by solving q3
+  for(const double q3: solveType3(1, 0, xz, 0, -1, zz))
   {
     const auto c3{cos(q3)};
     const auto s3{sin(q3)};
 
-    if(!isNull(c3))
+    // solve q1+q2
+    for(const auto q12: solveType3(1, 0, yy, 0, 1, yx))
     {
-      const double q4 = -(tz - r1)/c3;
+      const auto c12{cos(q12)};
+      const auto s12{sin(q12)};
 
-      for(const auto q12: solveType3(1, 0, yy, 0, 1, yx))
+      // solve q1 and q4
+      for(const auto [q1,q4]: solveType5(
+            a2, ty-r3*s12, -s3*c12, a2, tx-r3*c12, s3*s12))
       {
-        const auto c12{cos(q12)};
-        const auto s12{sin(q12)};
-
-        const auto X1{0};
-        const auto Y1{a2};
-        const auto Z1{tx + q4*s3*s12 - r3*c12};
-
-        const auto X2{a2};
-        const auto Y2{0};
-        const auto Z2{ty - q4*s3*c12 - r3*s12};
-
-        for(const auto q1: solveType3(X1, Y1, Z1, X2, Y2, Z2))
-        {
-          const auto q2 = q12 - q1;
-          addCandidate({q1, q2, q3, q4});
-        }
-      }
-    }
-    else
-    {
-      // cos(q3) = 0 -> do something else
-
-      const auto c12{yx};
-      const auto s12{yy};
-
-      const auto Y1{ty-r3*s12};
-      const auto Z1{-s3*c12};
-      const auto Y2{tx-r3*c12};
-      const auto Z2{s3*s12};
-      for(const auto [q1, q4]: solveType5(a2, Y1, Z1, a2, Y2, Z2))
-      {
-        for(const auto q12: solveType3(1,0,s12,0,1,c12))
+        if(isNull(-q4*c3+r1 - tz))
         {
           const auto q2{q12-q1};
-          addCandidate({q1, q2, q3, q4});
+          addCandidate({q1,q2,q3,q4});
         }
       }
     }
+
   }
 
   const auto eMf{fMe_des.inverse()};

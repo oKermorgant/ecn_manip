@@ -37,15 +37,15 @@ void putAt(vpColVector &_e, const vpColVector &_esub, const unsigned int r)
 std::unique_ptr<ecn::Robot> initRobot(int argc, char ** argv, double rate = 100)
 {
   Node::init(argc, argv);
-  auto node = std::unique_ptr<Node>(new Node(rate));
-  const std::string name = node->robotName();
+  auto node{std::make_unique<Node>(rate)};
+  const std::string name{node->robotName()};
 
   if(name == "turret")
-    return std::unique_ptr<Robot>(new ecn::RobotTurret(node));
+    return std::make_unique<RobotTurret>(node);
   else if(name == "ur10")
-    return std::unique_ptr<Robot>(new ecn::RobotUR10(node));
+    return std::make_unique<RobotUR10>(node);
   else if(name == "kuka_kr16")
-    return std::unique_ptr<Robot>(new ecn::RobotKr16(node));
+    return std::make_unique<RobotKr16>(node);
 
   std::cout << "Robot with name " << name << " is not modeled" << std::endl;
   throw std::invalid_argument(name);

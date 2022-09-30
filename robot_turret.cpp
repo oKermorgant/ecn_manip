@@ -21,7 +21,10 @@ vpHomogeneousMatrix ecn::RobotTurret::fMw(const vpColVector &q) const
 // Inverse Geometry
 vpColVector ecn::RobotTurret::inverseGeometry(const vpHomogeneousMatrix &fMe_des, const vpColVector &q0) const
 {
+    // build corresponding oMw and explode into 12 elements
+    const auto [xx,xy,xz,yx,yy,yz,zx,zy,zz,tx,ty,tz] = explodeMatrix(fMe_des);
 
+    // TODO add candidates
 
 
     return bestCandidate(q0);

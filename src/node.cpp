@@ -25,7 +25,7 @@ uint Node::initRobot(std::vector<double> &q_max, std::vector<double> &q_min,
 
   q_max.clear();
   q_min.clear();
-  v_max.clear();
+  v_max.clear();    
 
   while(cur_link != "base_link")
   {
@@ -130,7 +130,7 @@ void Node::setJointPosition(const vpColVector &_q)
   cmd_pub.publish(joint_cmd);
 }
 
-void Node::setJointVelocity(const vpColVector &_velocity, double scale)
+void Node::setJointVelocity(const vpColVector &_velocity)
 {
   joint_cmd.header.stamp = ros::Time::now();
 
@@ -138,7 +138,7 @@ void Node::setJointVelocity(const vpColVector &_velocity, double scale)
     joint_cmd.velocity.resize(dofs);
 
   for(uint i=0;i<dofs;++i)
-    joint_cmd.velocity[i] = _velocity[i] * scale;
+    joint_cmd.velocity[i] = _velocity[i];
 
   cmd_pub.publish(joint_cmd);
 }
