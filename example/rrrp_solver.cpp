@@ -10,6 +10,7 @@ int main()
 {
   RobotRRRP robot;
 
+
   for(auto i = 0 ; i < 6; ++i)
   {
     // generate random valid joint positions
@@ -32,22 +33,22 @@ int main()
     }
 
 
-    std::cout << "Joint positions: " << q.t() << std::endl;
+    std::cout << "Source position: " << q.t() << std::endl;
 
     // compute corresponding DGM
     auto M = robot.fMe(q);
 
     // try to find q back from M
     auto q_solution = robot.inverseGeometry(M, robot.jointRand());
-    std::cout << "Solution found : " << q_solution.t() << std::endl;
-    M *= robot.fMe(q_solution).inverse();
-    std::cout << "   -> pose error: " << vpPoseVector(M).t().frobeniusNorm() << std::endl;
+    std::cout << " -> Chosen solution: " << q_solution.t();
+    std::cout << " / pose error: " << vpPoseVector(M*robot.fMe(q_solution).inverse()).t().frobeniusNorm() << std::endl;
 
     q_solution = robot.iterativeIK(robot.fMe(q), robot.jointRand());
-    std::cout << "Iterative sol. found : " << q_solution.t() << std::endl;
-    M *= robot.fMe(q_solution).inverse();
-    std::cout << "   -> pose error: " << vpPoseVector(M).t().frobeniusNorm() << std::endl;
+    std::cout << "\n Iterative solution : " << q_solution.t();
+    std::cout << " / pose error: " << vpPoseVector(M*robot.fMe(q_solution).inverse()).t().frobeniusNorm() << std::endl;
     std::cout << std::endl;
+
+    std::cout << '\n';
   }
 
 

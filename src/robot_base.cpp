@@ -110,7 +110,7 @@ vpColVector Robot::iterativeIK(const vpHomogeneousMatrix &fMe_des, vpColVector q
 
   const auto fMw_d = fMe_des * wMe.inverse();
 
-  auto M = fMw(q0);
+  auto M = fMw(q0);  
 
   vpColVector v(6);
   vpPoseVector p(M.inverse()*fMw_d);
@@ -123,7 +123,7 @@ vpColVector Robot::iterativeIK(const vpHomogeneousMatrix &fMe_des, vpColVector q
     const auto R{M.getRotationMatrix()};
     v.insert(0, R * p.getTranslationVector());
     v.insert(3, R * static_cast<vpColVector>(p.getThetaUVector()));
-    q0 += lambda * fJw(q0).t() * v;
+    q0 += lambda * fJw(q0).pseudoInverse() * v;
     M = fMw(q0);
     p.buildFrom(M.inverse() * fMw_d);
   }
@@ -213,41 +213,29 @@ void Robot::addCandidate(std::vector<double> q_candidate) const
 }
 
 
-vpColVector Robot::bestCandidate(const vpColVector &q0) const
+vpColVector Robot::bestCandidate(const vpColVector &q0, std::vector<double> weights) const
 {
   // returns position from q_candidates closest to q0
-  vpColVector q(q0);
-  if(q_candidates.size())
+
+  // is no candidates just return q0
+  if(q_candidates.empty())
+    return q0;
+
+  weights.resize(q0.size(), 1);
+
+  const auto distanceToq0 = [&](const vpColVector &q1, const vpColVector &q2)
   {
-    double best = 0.0;
-    int best_idx = -1;
-    int k = 0;
-    for(auto &qsol: q_candidates)
+    // return whether q1 or q2 is closer to q0
+    double d1{}, d2{};
+    for(uint i = 0; i < q0.size(); ++i)
     {
-      bool in_bounds = true;
-      for(unsigned int i = 0; i < qsol.size(); ++i)
-      {
-        if(!inAngleLimits(qsol[i], q_min[i], q_max[i]))
-          in_bounds = false;
-      }
-      if(in_bounds)
-      {
-        double d = 0;
-        for(uint i = 0; i < qsol.size(); ++i)
-          d += vpMath::sqr(q0[i] - qsol[i]);
-        if(best_idx == -1 || d < best)
-        {
-          best = d;
-          best_idx = k;
-        }
-      }
-      k++;
+      d1 += weights[i]*vpMath::sqr(q0[i]-q1[i]);
+      d2 += weights[i]*vpMath::sqr(q0[i]-q2[i]);
     }
+    return d1 < d2;
+  };
 
-    if(best_idx != -1)
-      q = q_candidates[best_idx];
-
-    q_candidates.clear();
-  }
-  return q;
+  const auto closest{*std::min_element(q_candidates.begin(), q_candidates.end(), distanceToq0)};
+  q_candidates.clear();
+  return closest;
 }

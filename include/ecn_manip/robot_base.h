@@ -101,7 +101,7 @@ public:
 
   // inverse geometry methods
   void addCandidate(std::vector<double> q_candidate) const;
-  vpColVector bestCandidate(const vpColVector &q0) const;
+  vpColVector bestCandidate(const vpColVector &q0, std::vector<double> weights = {}) const;
 
   // to be overloaded
   virtual void init_wMe() = 0;
