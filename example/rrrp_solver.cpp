@@ -18,17 +18,14 @@ int main()
 
     // check it works for cos(q3) = 0
     if(i == 0)
-      q[2] = M_PI/2;
-    // check behavior if q1 out of bounds
-    if(i == 1)
     {
-      std::cout << "q1 out of bounds\n";
-      q[0] = robot.jointMax()[0] + 1.;
+      std::cout << "Special case: c3 = 0\n";
+      q[2] = M_PI/2;
     }
     // check behavior if q4 out of bounds
-    if(i == 2)
+    if(i == 1)
     {
-      std::cout << "q4 out of bounds\n";
+      std::cout << "Special case: q4 out of bounds\n";
       q[3] = robot.jointMax()[3] + 1.;
     }
 
@@ -50,8 +47,6 @@ int main()
 
     std::cout << '\n';
   }
-
-
 
 
 

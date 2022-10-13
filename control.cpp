@@ -95,7 +95,8 @@ int main(int argc, char ** argv)
             {
                 q0 = robot->inverseGeometry(M0, q);
                 qf = robot->inverseGeometry(Md, q);
-            }
+            }           
+
 
             // TODO: compute qCommand from q0, qf, t, t0 and tf
 

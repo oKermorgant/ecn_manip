@@ -10,16 +10,14 @@ using std::endl;
 using ecn::Robot;
 
 namespace {
-bool inAngleLimits(double &qi, double q_min, double q_max)
+bool angleOK(double &qi, double q_min, double q_max)
 {
-  if(qi >= q_min && qi <= q_max)
-    return true;
-  qi += 2*M_PI;
-  if(qi >= q_min && qi <= q_max)
-    return true;
-  qi -= 4*M_PI;
-  if(qi >= q_min && qi <= q_max)
-    return true;
+  for(auto turn: {0., 2*M_PI, -4*M_PI})
+  {
+    qi += turn;
+    if(qi >= q_min && qi <= q_max)
+      return true;
+  }
   return false;
 }
 }
@@ -124,6 +122,8 @@ vpColVector Robot::iterativeIK(const vpHomogeneousMatrix &fMe_des, vpColVector q
     v.insert(0, R * p.getTranslationVector());
     v.insert(3, R * static_cast<vpColVector>(p.getThetaUVector()));
     q0 += lambda * fJw(q0).pseudoInverse() * v;
+    for(uint i = 0; i < dofs; ++i)
+      q0[i] = std::clamp(q0[i], q_min[i], q_max[i]);
     M = fMw(q0);
     p.buildFrom(M.inverse() * fMw_d);
   }
@@ -212,6 +212,16 @@ void Robot::addCandidate(std::vector<double> q_candidate) const
     q_candidates.push_back(q_candidate);
 }
 
+bool Robot::inAngleLimits(std::vector<double> &q) const
+{
+    for(uint i = 0; i < q.size(); ++i)
+    {
+      if(!angleOK(q[i], q_min[i], q_max[i]))
+        return false;
+    }
+    return true;
+}
+
 
 vpColVector Robot::bestCandidate(const vpColVector &q0, std::vector<double> weights) const
 {
@@ -219,7 +229,20 @@ vpColVector Robot::bestCandidate(const vpColVector &q0, std::vector<double> weig
 
   // is no candidates just return q0
   if(q_candidates.empty())
+  {
+    std::cerr << "No inverse geometry candidates" << std::endl;
     return q0;
+  }
+
+  // remove out of bounds
+  const auto last_inbounds{std::remove_if(q_candidates.begin(), q_candidates.end(),
+                                    [&](auto &candidate){return !inAngleLimits(candidate);})};
+
+  if(last_inbounds == q_candidates.begin())
+  {
+    std::cerr << "Inverse geometry candidates are out of joint limits" << std::endl;
+    return q0;
+  }
 
   weights.resize(q0.size(), 1);
 
@@ -235,7 +258,7 @@ vpColVector Robot::bestCandidate(const vpColVector &q0, std::vector<double> weig
     return d1 < d2;
   };
 
-  const auto closest{*std::min_element(q_candidates.begin(), q_candidates.end(), distanceToq0)};
+  const auto closest{*std::min_element(q_candidates.begin(), last_inbounds, distanceToq0)};
   q_candidates.clear();
   return closest;
 }

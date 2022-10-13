@@ -28,7 +28,8 @@ enum class ControlMode{POSITION_MANUAL=0,
                 STRAIGHT_LINE_P2P=4,
                 VELOCITY_P2P=5};
 
-class Robot {
+class Robot
+{
 
 public:
 
@@ -135,6 +136,8 @@ protected:
   uint dofs;
   std::vector<double> q_max, q_min, v_max;
   double t_gt;    // last time we checked the ground truth
+
+  bool inAngleLimits(std::vector<double> &q) const;
 
   void updateDesiredPose()
   {
