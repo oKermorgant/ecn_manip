@@ -42,11 +42,11 @@ std::unique_ptr<ecn::Robot> initRobot(int argc, char ** argv, double rate = 100)
   const auto name{model->getName()};
 
   if(name == "turret")
-    return std::unique_ptr<Robot>(new ecn::RobotTurret(node, *model));
+    return std::make_unique<RobotTurret>(node, *model);
   else if(name == "ur10")
-    return std::unique_ptr<Robot>(new ecn::RobotUR10(node, *model));
+    return std::make_unique<RobotUR10>(node, *model);
   else if(name == "kuka_kr16")
-    return std::unique_ptr<Robot>(new ecn::RobotKr16(node, *model));
+    return std::make_unique<RobotKr16>(node, *model);
 
   std::cout << "Robot with name " << name << " is not modeled" << std::endl;
   throw std::invalid_argument(name);

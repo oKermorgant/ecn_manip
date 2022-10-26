@@ -124,7 +124,11 @@ protected:
   mutable std::vector<std::vector<double> > q_candidates;
 
   // explode inverse geometry to meaningful values
+  /// decomposes 0Mw into its 12 components
   std::array<double, 12> explodeMatrix(const vpHomogeneousMatrix &fMe_des) const;
+  /// decomposes the translation part of 0Mw into its 3 components
+  std::array<double, 3> explodeTranslation(const vpHomogeneousMatrix &fMe_des) const;
+  /// decomposes 3R6 into its 9 components
   std::array<double, 9> explodeWristMatrix(const vpHomogeneousMatrix &fMe_des,
                                        const vpRotationMatrix &R03) const;
 

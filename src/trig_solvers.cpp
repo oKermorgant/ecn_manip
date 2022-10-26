@@ -50,24 +50,21 @@ std::vector<double> solveType3(double x1, double y1, double z1,
 {
 
   if(isNull(y1) && isNull(x2))
-  {
     return {atan2(z1/x1, z2/y2)};
-  }
-  if(isNull(x1) && isNull(y2))
-  {
-    return {atan2(z2/x2, z1/y1)};
-  }
 
-  const auto d = x1*y2-x2*y1;
+  if(isNull(x1) && isNull(y2))
+    return {atan2(z2/x2, z1/y1)};
+
+  const auto d{x1*y2-x2*y1};
   if(isNull(d)) // singular system
   {
     std::vector<double> q;
-    for(double qi: solveType2(x1, y1, z1))
+    const auto candidates{solveType2(x1, y1, z1)};
+    std::copy_if(candidates.begin(), candidates.end(), std::back_inserter(q), [&](auto qi)
     {
       // check consistency with eq. 2
-      if(isNull(x2*sin(qi)+y2*cos(qi)-z2))
-        q.push_back(qi);
-    }
+      return isNull(x2*sin(qi)+y2*cos(qi)-z2);
+    });
     return q;
   }
   return {atan2((z1*y2-z2*y1)/d, (z2*x1-z1*x2)/d)};
@@ -90,6 +87,11 @@ TwoJointsCandidate solveType4(double x1, double y1, double x2, double y2)
 TwoJointsCandidate solveType5(double x1, double y1, double z1,
                    double x2, double y2, double z2)
 {
+  if(isNull(x1) || isNull(x2))
+  {
+    std::cerr << "solveType5: x1 or x2 is null, cannot solve" << std::endl;
+    return {};
+  }
   TwoJointsCandidate q;
   y1 /= x1;
   z1 /= x1;
@@ -120,7 +122,7 @@ TwoJointsCandidate solveType6(double x, double y,
                             2*(z1*x - z2*y),
                             sqr(w) - sqr(x) - sqr(y) - sqr(z1) - sqr(z2)))
   {
-    const auto c{cos(qi)}, s{sin(qi)};
+    const auto [c,s] = cos_sin(qi);
     // qj from type 3
     append(q, solveType3(w, 0, x*c+y*s+z1, 0, w, x*s-y*c+z2),
            [&](auto qj) {return TwoJoints{qi,qj};});
@@ -137,7 +139,7 @@ TwoJointsCandidate solveType7(double x, double y, double z1, double z2, double w
                             2*(z1*x - z2*y),
                             sqr(w1) + sqr(w2) - sqr(x) - sqr(y) - sqr(z1) - sqr(z2)))
   {
-    const auto c{cos(qi)}, s{sin(qi)};
+    const auto [c,s] = cos_sin(qi);
     // qj from type 3
     append(q, solveType3(w2, w1, x*c+y*s+z1, w1, -w2, x*s-y*c+z2),
            [&](auto qj) {return TwoJoints{qi,qj};});

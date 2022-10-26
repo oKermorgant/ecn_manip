@@ -23,10 +23,7 @@ vpHomogeneousMatrix ecn::RobotKr16::fMw(const vpColVector &q) const
 vpColVector ecn::RobotKr16::inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const
 {
   // desired wrist position
-  const auto T{(fM0.inverse()*Md*wMe.inverse()).getTranslationVector()};
-  const auto tx{T[0]};
-  const auto ty{T[1]};
-  const auto tz{T[2]};
+  const auto [tx,ty,tz] = explodeTranslation(Md);
 
   // first solve position for (q1,q2,q3)
 

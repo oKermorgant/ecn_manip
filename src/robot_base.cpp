@@ -74,7 +74,6 @@ vpHomogeneousMatrix Robot::intermediaryPose(vpHomogeneousMatrix M1, vpHomogeneou
 {
   if(a <= 0)
     return M1;
-
   else if(a >= 1)
     return M2;
 
@@ -108,7 +107,7 @@ vpColVector Robot::iterativeIK(const vpHomogeneousMatrix &fMe_des, vpColVector q
 
   const auto fMw_d = fMe_des * wMe.inverse();
 
-  auto M = fMw(q0);  
+  auto M = fMw(q0);
 
   vpColVector v(6);
   vpPoseVector p(M.inverse()*fMw_d);
@@ -200,11 +199,17 @@ std::array<double, 12> Robot::explodeMatrix(const vpHomogeneousMatrix &fMe_des) 
   return elements;
 }
 
-std::array<double, 9> Robot::explodeWristMatrix(const vpHomogeneousMatrix &fMe_des,
-                                     const vpRotationMatrix &R03) const
+std::array<double, 3> Robot::explodeTranslation(const vpHomogeneousMatrix &fMe_des) const
 {
-  const auto M06{fM0.inverse() * fMe_des * wMe.inverse()};
-  const auto R36{R03.t() * M06.getRotationMatrix()};
+  const auto oTw{(fM0.inverse() * fMe_des * wMe.inverse()).getTranslationVector()};
+  return {oTw[0], oTw[1], oTw[2]};
+}
+
+std::array<double, 9> Robot::explodeWristMatrix(const vpHomogeneousMatrix &fMe_des,
+                                                const vpRotationMatrix &R03) const
+{
+  const auto R06{fM0.getRotationMatrix().t() * fMe_des.getRotationMatrix() * wMe.getRotationMatrix().t()};
+  const auto R36{R03.t() * R06};
   std::array<double, 9> elements;
   auto elem{elements.begin()};
   for(uint col = 0; col < 3; ++col)
@@ -232,12 +237,12 @@ void Robot::addCandidate(std::vector<double> q_candidate) const
 
 bool Robot::inAngleLimits(std::vector<double> &q) const
 {
-    for(uint i = 0; i < q.size(); ++i)
-    {
-      if(!angleOK(q[i], q_min[i], q_max[i]))
-        return false;
-    }
-    return true;
+  for(uint i = 0; i < q.size(); ++i)
+  {
+    if(!angleOK(q[i], q_min[i], q_max[i]))
+      return false;
+  }
+  return true;
 }
 
 
@@ -254,7 +259,7 @@ vpColVector Robot::bestCandidate(const vpColVector &q0, std::vector<double> weig
 
   // remove out of bounds
   const auto last_inbounds{std::remove_if(q_candidates.begin(), q_candidates.end(),
-                                    [&](auto &candidate){return !inAngleLimits(candidate);})};
+                                          [&](auto &candidate){return !inAngleLimits(candidate);})};
 
   if(last_inbounds == q_candidates.begin())
   {
