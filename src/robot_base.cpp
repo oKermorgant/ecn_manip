@@ -188,13 +188,31 @@ std::array<double, 12> Robot::explodeMatrix(const vpHomogeneousMatrix &fMe_des) 
   const auto oMw{fM0.inverse() * fMe_des * wMe.inverse()};
 
   std::array<double, 12> elements;
-  size_t idx{0};
+  auto elem{elements.begin()};
   for(uint col = 0; col < 4; ++col)
   {
     for(uint row = 0; row < 3; ++row)
     {
-      elements[idx] = oMw[row][col];
-      idx++;
+      *elem = oMw[row][col];
+      elem++;
+    }
+  }
+  return elements;
+}
+
+std::array<double, 9> Robot::explodeWristMatrix(const vpHomogeneousMatrix &fMe_des,
+                                     const vpRotationMatrix &R03) const
+{
+  const auto M06{fM0.inverse() * fMe_des * wMe.inverse()};
+  const auto R36{R03.t() * M06.getRotationMatrix()};
+  std::array<double, 9> elements;
+  auto elem{elements.begin()};
+  for(uint col = 0; col < 3; ++col)
+  {
+    for(uint row = 0; row < 3; ++row)
+    {
+      *elem = R36[row][col];
+      elem++;
     }
   }
   return elements;
@@ -241,6 +259,7 @@ vpColVector Robot::bestCandidate(const vpColVector &q0, std::vector<double> weig
   if(last_inbounds == q_candidates.begin())
   {
     std::cerr << "Inverse geometry candidates are out of joint limits" << std::endl;
+    q_candidates.clear();
     return q0;
   }
 

@@ -125,6 +125,8 @@ protected:
 
   // explode inverse geometry to meaningful values
   std::array<double, 12> explodeMatrix(const vpHomogeneousMatrix &fMe_des) const;
+  std::array<double, 9> explodeWristMatrix(const vpHomogeneousMatrix &fMe_des,
+                                       const vpRotationMatrix &R03) const;
 
   // 2 desired poses for switching
   vpHomogeneousMatrix M1_, M2_;

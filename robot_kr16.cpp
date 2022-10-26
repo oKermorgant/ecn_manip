@@ -12,31 +12,39 @@ void ecn::RobotKr16::init_wMe()
 // Direct Geometry fixed to wrist frame
 vpHomogeneousMatrix ecn::RobotKr16::fMw(const vpColVector &q) const
 {
-    vpHomogeneousMatrix M;
+  vpHomogeneousMatrix M;
 
 
-    return M;
+  return M;
 }
 
 
 // Inverse Geometry
 vpColVector ecn::RobotKr16::inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const
 {
-    // desired wrist pose
-    vpHomogeneousMatrix fMw = Md * wMe.inverse();
+  // desired wrist position
+  const auto T{(fM0.inverse()*Md*wMe.inverse()).getTranslationVector()};
+  const auto tx{T[0]};
+  const auto ty{T[1]};
+  const auto tz{T[2]};
+
+  // first solve position for (q1,q2,q3)
 
 
 
+  // then (inside the last for block) build R36 and solve it for (q4,q5,q6)
 
-    return bestCandidate(q0);
+
+
+  return bestCandidate(q0);
 }
 
 
 vpMatrix ecn::RobotKr16::fJw(const vpColVector &q) const
 {
-    vpMatrix J(6, dofs);
+  vpMatrix J(6, dofs);
 
 
 
-    return J;
+  return J;
 }

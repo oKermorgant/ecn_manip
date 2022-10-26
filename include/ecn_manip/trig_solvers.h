@@ -18,6 +18,7 @@ using TwoJointsCandidate = std::vector<TwoJoints>;
 inline bool isNull(double v)    {return fabs(v) < 1e-6;}
 inline double sqr(double v)     {return v*v;}
 
+std::vector<double> solveType2(double x, double y, double z=0);
 std::vector<double> solveType2(double x, double y, double z);
 
 std::vector<double> solveType3(double x1, double y1, double z1,

@@ -332,7 +332,7 @@ def compute_Ji(joint_prism, u0, p0, i):
     #return Jv.col_join(Jw)
 
 
-def replaceFctQ(s, cDef, cUse, q = 'q'):
+def replaceFctQ(s, cDef, cUse, q = 'q', q_vector = True):
     '''
     Replace cos and sin functions of q_i with precomputed constants
     '''
@@ -357,7 +357,10 @@ def replaceFctQ(s, cDef, cUse, q = 'q'):
                     if 'q' in v:
                         cUse[sf] += v[1:]
                         i = int(v[1:])
-                        sUse += '%s[%i]' % (q, i-1)                        
+                        if q_vector:
+                            sUse += f'{q}[{i-1}]'
+                        else:
+                            sUse += f'{q}{i}'
                     else:
                         cUse[sf] += pmDict[v]                
                         sUse += v
@@ -372,16 +375,13 @@ def replaceFctQ(s, cDef, cUse, q = 'q'):
         s = s.replace('q%i' % (i+1), '%s[%i]' % (q, i))
     return s.replace('00000000000000', '').replace('0000000000000', ''), cDef, cUse
 
-def exportCpp(M, s='M', q = 'q', col_offset = 0):
+def exportCpp(M, s='M', q = 'q', col_offset = 0, q_vector = True):
         '''
         Writes the C++ code corresponding to a given matrix
         '''
         cDef={}
         cUse={}
         M_lines = []
-        comment = True
-        if M.rows == 4 and M.cols == 4:
-            comment = M[3,:].tolist()[0] != [0,0,0,1]
 
         # write each element
         sRows = ''
@@ -392,11 +392,8 @@ def exportCpp(M, s='M', q = 'q', col_offset = 0):
                 for j in range(M.cols):
                         if M.cols > 1:
                                 sCols = '[' + str(j+col_offset) + ']'
-                        if M[i,j] == 0 and comment: # comment this out
-                            M_lines.append('//' + s + sRows + sCols + ' = 0;')
-                        else:
-                            ms, cDef, cUse = replaceFctQ(str(sp.N(M[i,j])), cDef, cUse, q)
-                            M_lines.append(s + sRows + sCols + ' = ' + ms + ';')
+                        ms, cDef, cUse = replaceFctQ(str(sp.N(M[i,j])), cDef, cUse, q, q_vector)
+                        M_lines.append(s + sRows + sCols + ' = ' + ms + ';')
                         
         # print definitions
         cDef = list(cDef.values())
@@ -465,8 +462,7 @@ def ComputeDK_J(T, u, prism, comp_all = False):
   
     return T0, all_J
 
-def better_latex(M):
-    
+def latex_print(M):
     s = sp.latex(M)
     s = s.replace('\\cos', 'c').replace('\\sin', 's')
     n = max([i for i in range(1,10) if '_{'+str(i)+'}' in s])
@@ -477,8 +473,6 @@ def better_latex(M):
         for i2 in range(1,n):
             s = s.replace(double.format(i1,i2), '_{{{}{}}}'.format(i1,i2))
     print(s)
-    
-        
     
 
 if __name__ == '__main__':
@@ -503,6 +497,12 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
 
+    def pretty_print(M):
+        if args.latex:
+            latex_print(M)
+        else:
+            sp.pretty_print(M)
+
     # check robot description file
     if not os.path.lexists(args.files[0]):
             print('File', args.files[0], 'does not exist')
@@ -525,12 +525,26 @@ if __name__ == '__main__':
 
     # get number of joints
     dof = len(T)
+
+    fixed_M = ((wMe, 'wMe','end-effector'), (fM0,'fM0','base frame'))
+    for M,symbol,title in fixed_M:
+        if M != None:
+            print('')
+            print(f'Building {symbol} code...')
+            print('')
+            print(f'    // Generated {title} code')
+            exportCpp(M, symbol)
+            print(f'    // End of {title} code')
+
+    if args.only_fixed:
+        sys.exit(0)
+
     
     if args.only_DGM:
     
         # Transform matrices
         print('')
-        print('Building direct kinematic model...')
+        print('Building direct geometric model...')
         T0 = []     # absolute T(0,i)
         for i in range(dof):
             if len(T0) == 0:
@@ -547,7 +561,7 @@ if __name__ == '__main__':
         sys.exit(0)
         
     
-    elif not args.only_fixed:
+    else:
         
         # Do the computation
         T0, all_J = ComputeDK_J(T, u, prism, args.all_J)
@@ -573,17 +587,7 @@ if __name__ == '__main__':
                 print('    // Generated Jacobian code')
                 exportCpp(all_J[-1], args.J, args.q)
                 print('    // End of Jacobian code')
-        
-        fixed_M = ((wMe, 'wMe','end-effector'), (fM0,'fM0','base frame'))
-        for M,symbol,title in fixed_M:
-            if M != None:
-                print('')
-                print(f'Building {symbol} code...')
-                print('')
-                print(f'    // Generated {title} code')
-                exportCpp(M, symbol)
-                print(f'    // End of {title} code')
-        
+
         if len(cst_symb):
             print('\n//Model constants')
             lines = []
@@ -598,23 +602,23 @@ if __name__ == '__main__':
     if args.display:
         print('\n\nFull model from root to wrist frame:')
         print('\nTranslation')
-        sp.pretty_print(T0[-1][:3,3])
+        pretty_print(T0[-1][:3,3])
         print('\nRotation')
-        sp.pretty_print(T0[-1][:3,:3])
+        pretty_print(T0[-1][:3,:3])
         
                 
     if args.wrist and dof == 6:        
         print('\n\nDecomposing DGM with regards to frame 3:')
         
         print('\nTranslation from root to wrist frame 0T6 (should only depend on q1 q2 q3):\n')
-        sp.pretty_print(T0[-1][:3,3])
+        pretty_print(T0[-1][:3,3])
         
         print('\n\nRotation 3R6 from frame 3 to wrist frame (should only depend on q4 q5 q6):\n')
         R36 = simp_matrix(T[3][:3,:3] * T[4][:3,:3] * T[5][:3,:3])
-        sp.pretty_print(R36)
+        pretty_print(R36)
             
         print('\n\nCode for the rotation 0R3 from root frame to frame 3:\n')
-        exportCpp(T0[2][:3,:3], 'R03')
+        exportCpp(T0[2][:3,:3], 'R03', q_vector=False)
 
     I4 = sp.eye(4)
     
@@ -627,16 +631,12 @@ if __name__ == '__main__':
             fMe = fMe.subs(sp.Symbol(f'q{n}'), 0)
 
     fMe = simp_matrix(fMe)
-    sp.pretty_print(fMe)
+    pretty_print(fMe)
                 
-    if args.latex:
-        print('\n\nModel from root to wrist frame:')
-        better_latex(T0[-1])
-            
-        print('\n\nJacobian:')
-        better_latex(all_J[-1])
+    if args.all_J:
+        pretty_print(all_J[-1])
 
-        
+
     if args.eJe:
         O3 = sp.zeros(3,3)
         def from_blocks(A,B,C,D):
