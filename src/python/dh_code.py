@@ -156,9 +156,9 @@ def load_urdf(filename):
         with open(filename) as f:
             return f.read()
     else:
-        urdf = check_output(('rosrun xacro xacro ' + filename).split(), encoding='UTF8')
+        urdf = check_output(('xacro ' + filename).split(), encoding='UTF8')
         if urdf[0] == 'w':
-            return check_output(('rosrun xacro xacro ' + filename).split(), encoding='UTF8')
+            return check_output(('xacro ' + filename).split(), encoding='UTF8')
         return urdf
         
 def parse_urdf(filename, base_frame, ee_frame, use_joint_names = False):
@@ -623,7 +623,7 @@ if __name__ == '__main__':
     I4 = sp.eye(4)
     
     fMe = (fM0 if fM0 is not None else I4) * T0[-1] * (wMe if wMe is not None else I4)
-    if args.fMe:
+    if args.fMe or args.latex:
         print('\n\nModel from base to end-effector frame fMe')
     else:
         print('\n\nModel from base to end-effector frame fMe for q=0')
