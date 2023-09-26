@@ -3,7 +3,7 @@ from simple_launch import SimpleLauncher
 def generate_launch_description():
     sl = SimpleLauncher()
     
-    robot = sl.declare_arg('robot', default_value='turret', description='Robot model (turret, kr16, ur10, rrrp)')
+    robot = sl.declare_arg('robot', default_value='turret', description='Robot model (turret, kr16, ur10, rrrp, dh, mdh)')
     
     urdf = robot+'.urdf'
     config = robot+'.rviz'

@@ -362,10 +362,10 @@ def replaceFctQ(s, cDef, cUse, q = 'q', q_vector = True):
                         else:
                             sUse += f'{q}{i}'
                     else:
-                        cUse[sf] += pmDict[v]                
+                        cUse[sf] += pmDict[v]
                         sUse += v
                 sUse += ')'                                             # cos(q[0]+q[1]-q[2])
-                cDef[sf] = 'const double %s = %s;' % (cUse[sf], sUse)   # const c1p2m3 = cos(q[0]+q[1]-q[2]);
+                cDef[sf] = f'const auto {cUse[sf]}{{{sUse}}};'   # const c1p2m3 = cos(q[0]+q[1]-q[2]);
                 s = s.replace(sf, cUse[sf])
             else:
                 break
@@ -592,7 +592,7 @@ if __name__ == '__main__':
             print('\n//Model constants')
             lines = []
             for key in cst_symb:
-                line = 'const double {} = {};'.format(key, cst_symb[key])
+                line = f'const auto {key}{{{cst_symb[key]}}}'
                 while line[-2] == '0':
                     line = line[:-2] + ';'
                 lines.append(line)

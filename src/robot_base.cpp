@@ -192,8 +192,8 @@ std::array<double, 12> Robot::explodeMatrix(const vpHomogeneousMatrix &fMe_des) 
   {
     for(uint row = 0; row < 3; ++row)
     {
-      *elem = oMw[row][col];
-      elem++;
+      *(elem++) = oMw[row][col];
+      //elem++;
     }
   }
   return elements;

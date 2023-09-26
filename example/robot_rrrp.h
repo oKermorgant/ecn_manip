@@ -11,18 +11,18 @@ class RobotRRRP: public ecn::Robot
 public:
   RobotRRRP() : ecn::Robot()
   {
-    // for the example robot, dimensions and joint limits are not read through ROS
+    // for the example robot, dimensions and joint limits are not read through ROS but hard coded
     dofs = 4;
     q_min = {-M_PI, -M_PI, -M_PI, -0.1};
     q_max = {M_PI, M_PI, M_PI, 0.1};
 
-    init_wMe();
+    this->init_wMe();
   }
 
-  void init_wMe();
-  vpHomogeneousMatrix fMw(const vpColVector &q) const;
-  vpColVector inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const;
-  vpMatrix fJw(const vpColVector &q) const;
+  void init_wMe() override;
+  vpHomogeneousMatrix fMw(const vpColVector &q) const override;
+  vpColVector inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const override;
+  vpMatrix fJw(const vpColVector &q) const override;
 };
 
 }
