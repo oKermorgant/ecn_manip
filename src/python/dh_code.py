@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 
 '''
@@ -13,28 +13,27 @@ author: Olivier Kermorgant, ICube Laboratory
 import yaml
 from lxml import etree
 import sys, os
-import sympy
+import sympy as sp
 from sympy.parsing.sympy_parser import parse_expr
 from pylab import pi, array, norm
 import re
 from multiprocessing import Pool
 import argparse
 from subprocess import check_output
-from tf.transformations import quaternion_from_matrix
 
 # Utility functions and variables
-X = sympy.Matrix([1,0,0]).reshape(3,1)
-Y = sympy.Matrix([0,1,0]).reshape(3,1)
-Z = sympy.Matrix([0,0,1]).reshape(3,1)
-Z4 = sympy.Matrix([0,0,0,1]).reshape(4,1)
+X = sp.Matrix([1,0,0]).reshape(3,1)
+Y = sp.Matrix([0,1,0]).reshape(3,1)
+Z = sp.Matrix([0,0,1]).reshape(3,1)
+Z4 = sp.Matrix([0,0,0,1]).reshape(4,1)
 cst_symb = {}
 
 def sk(u):
-    return sympy.Matrix([[0,-u[2],u[1]],[u[2],0,-u[0]],[-u[1],u[0],0]])
+    return sp.Matrix([[0,-u[2],u[1]],[u[2],0,-u[0]],[-u[1],u[0],0]])
 
 def Rot(theta,u):
-    R = sympy.cos(theta)*sympy.eye(3) + sympy.sin(theta)*sk(u) + (1-sympy.cos(theta))*(u*u.transpose())
-    return sympy.Matrix(R)
+    R = sp.cos(theta)*sp.eye(3) + sp.sin(theta)*sk(u) + (1-sp.cos(theta))*(u*u.transpose())
+    return sp.Matrix(R)
 
 def Rxyz(rpy):
     '''
@@ -42,15 +41,11 @@ def Rxyz(rpy):
     '''
     return Rot(rpy[2],Z)*Rot(rpy[1],Y)*Rot(rpy[0],X)
 
-def Quat(M):
-    Mn = array(M)
-    print(quaternion_from_matrix(Mn))
-
 def Homogeneous(t, R):
     '''
     Homogeneous frame transformation matrix from translation t and rotation R
     '''
-    M = simp_matrix((R.row_join(t)).col_join(sympy.Matrix([[0,0,0,1]])))
+    M = simp_matrix((R.row_join(t)).col_join(sp.Matrix([[0,0,0,1]])))
     return M
 
 class Bunch(object):
@@ -95,8 +90,9 @@ def load_yaml(filename):
                 this_prism = True
         if type(joint[iTheta]) == str:
             if 'q' in joint[iTheta]:
-                this_prism = False    
-        prism.append(this_prism)
+                this_prism = False
+        if this_prism is not None:
+            prism.append(this_prism)
         for i in range(4):
             if type(joint[i]) == str:
                 joint[i] = parse_expr(joint[i])
@@ -121,8 +117,8 @@ def simp_rpy(rpy):
         for k in range(-12,13):
             if abs(rpy[i] - k*pi/12.) < 1e-5:
                 if k != 0:
-                    print('  changing', rpy[i], 'to', sympy.simplify(k*sympy.pi/12))
-                rpy[i] = str(sympy.simplify(k*sympy.pi/12))
+                    print('  changing', rpy[i], 'to', sp.simplify(k*sp.pi/12))
+                rpy[i] = str(sp.simplify(k*sp.pi/12))
                 if rpy[i] == '0':
                     rpy[i] = 0
                 break
@@ -137,7 +133,7 @@ def simp_axis(u):
         for v in (-1,0,1):
             if abs(u[i]-v) < 1e-5:
                 u[i] = v
-    return sympy.Matrix(u).reshape(3,1)
+    return sp.Matrix(u).reshape(3,1)
 
 def simp_val(val, idx):
     '''
@@ -151,8 +147,8 @@ def simp_val(val, idx):
         else:
             s = 'abd'[i] + str(idx)
             cst_symb[s] = val[i]
-            val[i] = sympy.Symbol(s)
-    return sympy.Matrix(val).reshape(len(val),1)
+            val[i] = sp.Symbol(s)
+    return sp.Matrix(val).reshape(len(val),1)
 
 def load_urdf(filename):
     # reads as URDF or XACRO depending on file name
@@ -160,9 +156,9 @@ def load_urdf(filename):
         with open(filename) as f:
             return f.read()
     else:
-        urdf = check_output(('rosrun xacro xacro ' + filename).split(), encoding='UTF8')
+        urdf = check_output(('xacro ' + filename).split(), encoding='UTF8')
         if urdf[0] == 'w':
-            return check_output(('rosrun xacro xacro ' + filename).split(), encoding='UTF8')
+            return check_output(('xacro ' + filename).split(), encoding='UTF8')
         return urdf
         
 def parse_urdf(filename, base_frame, ee_frame, use_joint_names = False):
@@ -207,7 +203,7 @@ def parse_urdf(filename, base_frame, ee_frame, use_joint_names = False):
     
     # build robot geometry
     n = 0
-    M = sympy.eye(4)
+    M = sp.eye(4)
     T = []
     prism = []
     u = []
@@ -223,11 +219,11 @@ def parse_urdf(filename, base_frame, ee_frame, use_joint_names = False):
         try:
             xyz = simp_val(joint.find('origin').get('xyz').split(' '), k+1)
         except:
-            xyz = sympy.zeros(3,1)
+            xyz = sp.zeros(3,1)
         try:
             rpy = simp_rpy(joint.find('origin').get('rpy').split(' '))
         except:
-            rpy = sympy.zeros(3,1)
+            rpy = sp.zeros(3,1)
         
         Mi = Homogeneous(xyz, Rxyz(rpy))
         # get quaternion
@@ -255,16 +251,16 @@ def parse_urdf(filename, base_frame, ee_frame, use_joint_names = False):
             u.append(simp_axis([str(v) for v in ax]))
             # Transform matrix
             if use_joint_names:
-                q = sympy.Symbol(joint.get('name'))
+                q = sp.Symbol(joint.get('name'))
             else:
-                q = sympy.Symbol('q%i'%n)
+                q = sp.Symbol('q%i'%n)
             all_q.append(q)
             if prism[-1]:
                 T.append(M * Homogeneous(q*u[-1], Rot(0, X)))
             else:
                 T.append(M * Homogeneous(0*X, Rot(q, u[-1])))
             # reset M for next joint
-            M = sympy.eye(4)
+            M = sp.eye(4)
         else:
             M = M*Mi
             
@@ -294,7 +290,7 @@ def simp_matrix(M):
     '''
     for i in range(M.rows):
         for j in range(M.cols):       
-            M[i,j] = sympy.trigsimp(M[i,j])
+            M[i,j] = sp.trigsimp(M[i,j])
             # check for these strange small numbers
             '''
             s = str(M[i,j])
@@ -312,7 +308,7 @@ def simp_matrix(M):
                         while s[n] != '.':
                             n -= 1
                         s = s.replace(s[n-1:m+4], '0')
-                M[i,j] = sympy.trigsimp(parse_expr(s))
+                M[i,j] = sp.trigsimp(parse_expr(s))
             '''            
     return M    
 
@@ -321,12 +317,12 @@ def compute_Ji(joint_prism, u0, p0, i):
     Compute the i-eth column of the Jacobian (used for multiprocessing)
     '''
     if joint_prism[i] == None:  # fixed joint
-        return sympy.zeros(6,0)
+        return sp.zeros(6,0)
     
     if joint_prism[i]:
         # prismatic joint: v = qdot.u and w = 0
         Jv = simp_matrix(u0[i])
-        Jw = sympy.Matrix([[0,0,0]]).reshape(3,1)
+        Jw = sp.Matrix([[0,0,0]]).reshape(3,1)
     else:
         # revolute joint: v = [qdot.u]x p and w = qdot.u
         Jv = simp_matrix(sk(u0[i])*(p0[-1]-p0[i]))
@@ -336,7 +332,7 @@ def compute_Ji(joint_prism, u0, p0, i):
     #return Jv.col_join(Jw)
 
 
-def replaceFctQ(s, cDef, cUse, q = 'q'):
+def replaceFctQ(s, cDef, cUse, q = 'q', q_vector = True):
     '''
     Replace cos and sin functions of q_i with precomputed constants
     '''
@@ -361,12 +357,15 @@ def replaceFctQ(s, cDef, cUse, q = 'q'):
                     if 'q' in v:
                         cUse[sf] += v[1:]
                         i = int(v[1:])
-                        sUse += '%s[%i]' % (q, i-1)                        
+                        if q_vector:
+                            sUse += f'{q}[{i-1}]'
+                        else:
+                            sUse += f'{q}{i}'
                     else:
-                        cUse[sf] += pmDict[v]                
+                        cUse[sf] += pmDict[v]
                         sUse += v
                 sUse += ')'                                             # cos(q[0]+q[1]-q[2])
-                cDef[sf] = 'const double %s = %s;' % (cUse[sf], sUse)   # const c1p2m3 = cos(q[0]+q[1]-q[2]);
+                cDef[sf] = f'const auto {cUse[sf]}{{{sUse}}};'   # const c1p2m3 = cos(q[0]+q[1]-q[2]);
                 s = s.replace(sf, cUse[sf])
             else:
                 break
@@ -376,16 +375,13 @@ def replaceFctQ(s, cDef, cUse, q = 'q'):
         s = s.replace('q%i' % (i+1), '%s[%i]' % (q, i))
     return s.replace('00000000000000', '').replace('0000000000000', ''), cDef, cUse
 
-def exportCpp(M, s='M', q = 'q', col_offset = 0):
+def exportCpp(M, s='M', q = 'q', col_offset = 0, q_vector = True):
         '''
         Writes the C++ code corresponding to a given matrix
         '''
         cDef={}
         cUse={}
         M_lines = []
-        comment = True
-        if M.rows == 4 and M.cols == 4:
-            comment = M[3,:].tolist()[0] != [0,0,0,1]
 
         # write each element
         sRows = ''
@@ -396,11 +392,8 @@ def exportCpp(M, s='M', q = 'q', col_offset = 0):
                 for j in range(M.cols):
                         if M.cols > 1:
                                 sCols = '[' + str(j+col_offset) + ']'
-                        if M[i,j] == 0 and comment: # comment this out
-                            M_lines.append('//' + s + sRows + sCols + ' = 0;')
-                        else:
-                            ms, cDef, cUse = replaceFctQ(str(sympy.N(M[i,j])), cDef, cUse, q)                        
-                            M_lines.append(s + sRows + sCols + ' = ' + ms + ';')
+                        ms, cDef, cUse = replaceFctQ(str(sp.N(M[i,j])), cDef, cUse, q, q_vector)
+                        M_lines.append(s + sRows + sCols + ' = ' + ms + ';')
                         
         # print definitions
         cDef = list(cDef.values())
@@ -457,21 +450,20 @@ def ComputeDK_J(T, u, prism, comp_all = False):
         
         iJ = [compute_Ji(prism, u0, p0, i) for i in range(ee)]
 
-        Js = sympy.Matrix()
-        Js.rows = 6
+        Js = sp.zeros(6, ee)
 
         for i in range(ee):
-            for iJi in iJ:
-                if iJi[0] == i:
-                    Js = Js.row_join(iJi[1])
-        all_J.append(Js)
+            for k,iJi in iJ:
+                if k == i:
+                    Js[:,i] = iJi
+                    #Js = Js.row_join(iJi)
+        all_J.append(Js.copy())
     print('')
   
     return T0, all_J
 
-def better_latex(M):
-    
-    s = sympy.latex(M)
+def latex_print(M):
+    s = sp.latex(M)
     s = s.replace('\\cos', 'c').replace('\\sin', 's')
     n = max([i for i in range(1,10) if '_{'+str(i)+'}' in s])
     single = '{{\\left(q_{{{}}} \\right)}}'
@@ -481,8 +473,6 @@ def better_latex(M):
         for i2 in range(1,n):
             s = s.replace(double.format(i1,i2), '_{{{}{}}}'.format(i1,i2))
     print(s)
-    
-        
     
 
 if __name__ == '__main__':
@@ -502,9 +492,16 @@ if __name__ == '__main__':
     parser.add_argument('--wrist', action='store_true', help='Prints the model of the wrist to help computing inverse geometry',default=False)
     parser.add_argument('--latex', action='store_true', help='Prints direct model and Jacobian in Latex style',default=False)
     parser.add_argument('--only-DGM', action='store_true', help='Only DGM',default=False)
+    parser.add_argument('--fMe', action='store_true', help='Prints the full fMe transform',default=False)
     parser.add_argument('--eJe', action='store_true', help='Prints the eJe Jacobian',default=False)
     
     args = parser.parse_args()
+
+    def pretty_print(M):
+        if args.latex:
+            latex_print(M)
+        else:
+            sp.pretty_print(M)
 
     # check robot description file
     if not os.path.lexists(args.files[0]):
@@ -528,12 +525,26 @@ if __name__ == '__main__':
 
     # get number of joints
     dof = len(T)
+
+    fixed_M = ((wMe, 'wMe','end-effector'), (fM0,'fM0','base frame'))
+    for M,symbol,title in fixed_M:
+        if M != None:
+            print('')
+            print(f'Building {symbol} code...')
+            print('')
+            print(f'    // Generated {title} code')
+            exportCpp(M, symbol)
+            print(f'    // End of {title} code')
+
+    if args.only_fixed:
+        sys.exit(0)
+
     
     if args.only_DGM:
     
         # Transform matrices
         print('')
-        print('Building direct kinematic model...')
+        print('Building direct geometric model...')
         T0 = []     # absolute T(0,i)
         for i in range(dof):
             if len(T0) == 0:
@@ -550,7 +561,7 @@ if __name__ == '__main__':
         sys.exit(0)
         
     
-    elif not args.only_fixed:
+    else:
         
         # Do the computation
         T0, all_J = ComputeDK_J(T, u, prism, args.all_J)
@@ -576,22 +587,12 @@ if __name__ == '__main__':
                 print('    // Generated Jacobian code')
                 exportCpp(all_J[-1], args.J, args.q)
                 print('    // End of Jacobian code')
-        
-        fixed_M = ((wMe, 'wMe','end-effector'), (fM0,'fM0','base frame'))
-        for M,symbol,title in fixed_M:
-            if M != None:
-                print('')
-                print(f'Building {symbol} code...')
-                print('')
-                print(f'    // Generated {title} code')
-                exportCpp(M, symbol)
-                print(f'    // End of {title} code')
-        
+
         if len(cst_symb):
             print('\n//Model constants')
             lines = []
             for key in cst_symb:
-                line = 'const double {} = {};'.format(key, cst_symb[key])
+                line = f'const auto {key}{{{cst_symb[key]}}}'
                 while line[-2] == '0':
                     line = line[:-2] + ';'
                 lines.append(line)
@@ -601,45 +602,43 @@ if __name__ == '__main__':
     if args.display:
         print('\n\nFull model from root to wrist frame:')
         print('\nTranslation')
-        sympy.pretty_print(T0[-1][:3,3])
+        pretty_print(T0[-1][:3,3])
         print('\nRotation')
-        sympy.pretty_print(T0[-1][:3,:3])
+        pretty_print(T0[-1][:3,:3])
         
                 
     if args.wrist and dof == 6:        
         print('\n\nDecomposing DGM with regards to frame 3:')
         
         print('\nTranslation from root to wrist frame 0T6 (should only depend on q1 q2 q3):\n')
-        sympy.pretty_print(T0[-1][:3,3])
+        pretty_print(T0[-1][:3,3])
         
         print('\n\nRotation 3R6 from frame 3 to wrist frame (should only depend on q4 q5 q6):\n')
         R36 = simp_matrix(T[3][:3,:3] * T[4][:3,:3] * T[5][:3,:3])
-        sympy.pretty_print(R36)
+        pretty_print(R36)
             
         print('\n\nCode for the rotation 0R3 from root frame to frame 3:\n')
-        exportCpp(T0[2][:3,:3], 'R03')
-            
-            
-    print('\n\nModel from base to end-effector frame fMe for q=0')
-    I4 = sympy.eye(4)        
-    O3 = sympy.zeros(3,3)
-    def to0(M, q):
-        return M.subs(sympy.Symbol(f'q{q}'), 0)
+        exportCpp(T0[2][:3,:3], 'R03', q_vector=False)
+
+    I4 = sp.eye(4)
     
     fMe = (fM0 if fM0 is not None else I4) * T0[-1] * (wMe if wMe is not None else I4)
-    for n in range(len(T0)):
-        fMe = to0(fMe, n+1)
-    sympy.pretty_print(fMe)
+    if args.fMe or args.latex:
+        print('\n\nModel from base to end-effector frame fMe')
+    else:
+        print('\n\nModel from base to end-effector frame fMe for q=0')
+        for n in range(len(T0)):
+            fMe = fMe.subs(sp.Symbol(f'q{n}'), 0)
+
+    fMe = simp_matrix(fMe)
+    pretty_print(fMe)
                 
-    if args.latex:
-        print('\n\nModel from root to wrist frame:')
-        better_latex(T0[-1])
-            
-        print('\n\nJacobian:')
-        better_latex(all_J[-1])
-        
+    if args.all_J:
+        pretty_print(all_J[-1])
+
+
     if args.eJe:
-        
+        O3 = sp.zeros(3,3)
         def from_blocks(A,B,C,D):
             return (A.row_join(B)).col_join(C.row_join(D))
         
