@@ -1,5 +1,5 @@
-#include <robot_kr16.h>
-#include <trig_solvers.h>
+#include <ecn_manip/robot_kr16.h>
+#include <ecn_manip/trig_solvers.h>
 
 // Model of Kuka KR16 robot
 

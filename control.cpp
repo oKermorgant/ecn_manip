@@ -1,4 +1,4 @@
-#include <robot_init.h>
+#include <ecn_manip/robot_init.h>
 
 using namespace std;
 using namespace ecn;

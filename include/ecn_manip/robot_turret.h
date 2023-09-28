@@ -1,7 +1,7 @@
 #ifndef ROBOT_TURRET_H
 #define ROBOT_TURRET_H
 
-#include <robot_base.h>
+#include <ecn_manip/robot_base.h>
 
 namespace ecn
 {
