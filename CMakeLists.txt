@@ -18,7 +18,7 @@ catkin_package(
   CATKIN_DEPENDS roscpp sensor_msgs tf2_ros urdf
   DEPENDS VISP)
 
-include_directories(src ${VISP_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
+include_directories(include src ${VISP_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 
 # main library
 add_library(ecn_manip src/robot_base.cpp src/trig_solvers.cpp src/ur_kin/ur_kin.cpp src/node.cpp)
