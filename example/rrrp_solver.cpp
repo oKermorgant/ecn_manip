@@ -8,7 +8,7 @@ using namespace ecn;
 
 int main()
 {
-  RobotRRRP robot;
+  RobotRRRP robot; 
 
 
   for(auto i = 0 ; i < 6; ++i)
@@ -16,14 +16,21 @@ int main()
     // generate random valid joint positions
     auto q = robot.jointRand();
 
+
+    // check it works for sin(q3) = 0
+    if(i == 3)
+    {
+      std::cout << "Special case: s3 = 0\n";
+      q[2] = 0;
+    }
     // check it works for cos(q3) = 0
-    if(i == 0)
+    if(i == 4)
     {
       std::cout << "Special case: c3 = 0\n";
       q[2] = M_PI/2;
     }
     // check behavior if q4 out of bounds
-    if(i == 1)
+    if(i == 5)
     {
       std::cout << "Special case: q4 out of bounds\n";
       q[3] = robot.jointMax()[3] + 1.;
@@ -40,11 +47,11 @@ int main()
     std::cout << " -> Chosen solution: " << q_solution.t();
     std::cout << " / pose error: " << vpPoseVector(M*robot.fMe(q_solution).inverse()).t().frobeniusNorm() << std::endl;
 
-    q_solution = robot.iterativeIK(robot.fMe(q), robot.jointRand());
+   /* q_solution = robot.iterativeIK(robot.fMe(q), robot.jointRand());
     std::cout << "\n Iterative solution : " << q_solution.t();
     std::cout << " / pose error: " << vpPoseVector(M*robot.fMe(q_solution).inverse()).t().frobeniusNorm() << std::endl;
     std::cout << std::endl;
-
+*/
     std::cout << '\n';
   }
 
