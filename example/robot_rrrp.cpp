@@ -1,5 +1,5 @@
 #include "robot_rrrp.h"
-#include <trig_solvers.h>
+#include <ecn_manip/trig_solvers.h>
 
 // Model of RRRP robot
 
@@ -46,117 +46,50 @@ vpHomogeneousMatrix ecn::RobotRRRP::fMw(const vpColVector &q) const
 }
 
 
-
-#define MANIP_2021
-
-#ifdef MANIP_2021
-
-// Inverse Geometry - 2021 approach with type 3
-vpColVector ecn::RobotRRRP::inverseGeometry(const vpHomogeneousMatrix &fMe_des, const vpColVector &q0) const
+// Inverse Geometry
+vpColVector ecn::RobotRRRP::inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const
 {
   // elements of target DGM matrix (new in 2021!)
-  const auto [xx,xy,xz,yx,yy,yz,zx,zy,zz,tx,ty,tz] = explodeMatrix(fMe_des);
-
-  vpHomogeneousMatrix M;
-  auto t = M.getTranslationVector();
-  auto theta_u = M.getThetaUVector();
+  const auto [xx,xy,xz,yx,yy,yz,zx,zy,zz,tx,ty,tz] = explodeMatrix(Md); {}
 
   const double r1 = 0.27;
   const double a2 = 0.2;
   const double r3 = 0.15;
 
-  // start by solving q3
-  for(const double q3: solveType3(1, 0, xz, 0, -1, zz))
+  for(auto q3: solveType3(1, 0, xz, 0, -1, zz))
   {
     const auto c3{cos(q3)};
     const auto s3{sin(q3)};
 
-    // solve q1+q2
-    for(const auto q12: solveType3(1, 0, yy, 0, 1, yx))
-    {
-      const auto c12{cos(q12)};
-      const auto s12{sin(q12)};
 
-      // solve q1 and q4
-      for(const auto [q1,q4]: solveType5(
-            a2, ty-r3*s12, -s3*c12, a2, tx-r3*c12, s3*s12))
-      {
-        if(isNull(-q4*c3+r1 - tz))
-        {
-          const auto q2{q12-q1};
-          addCandidate({q1,q2,q3,q4});
-        }
-      }
-    }
-
-  }
-
-  const auto eMf{fMe_des.inverse()};
-  for(const auto &q_cand: q_candidates)
-  {
-    std::cout << " - Candidate solution: ";
-    for(auto &qi: q_cand)
-      std::cout << qi << " ";
-    std::cout << " (pose error is " << vpPoseVector(fMe(q_cand)*eMf).t().frobeniusNorm() << ")" << std::endl;
-  }
-
-  return bestCandidate(q0);
-}
-
-#else
-
-// Inverse Geometry - 2020 approach with type 5
-vpColVector ecn::RobotRRRP::inverseGeometry(const vpHomogeneousMatrix &fMe_des, const vpColVector &q0) const
-{
-  // reduced DGM
-  const vpHomogeneousMatrix oMw = fM0.inverse() * fMe_des * wMe.inverse();
-  const auto [xx,xy,xz,yx,yy,yz,zx,zy,zz,tx,ty,tz] = explodeMatrix(fMe_des);
-
-      const double r1 = 0.27;
-      const double a2 = 0.2;
-      const double r3 = 0.15;
-
-      const auto s3{oMw[2][0]};
-  const auto c3{-oMw[2][2]};
-
-  // start by solving q3
-  for(double q3: solveType3(1, 0, s3, 0, 1, c3))
-  {
     const auto c12{yx};
     const auto s12{yy};
-
-    const auto Y1{ty-r3*s12};
-    const auto Z1{-s3*c12};
-    const auto Y2{tx-r3*c12};
-    const auto Z2{s3*s12};
-    for(const auto [q1, q4]: solveType5(a2, Y1, Z1, a2, Y2, Z2))
+    for(auto q12: solveType3(1, 0, yy, 0, 1, yx))
     {
-      if(isNull(-q4*c3 + r1 - tz))
+
+      if(std::abs(s3) > std::abs(c3))
       {
-        for(const auto q12: solveType3(1,0,s12,0,1,c12))
+        for(auto [q1,q4]: solveType5(a2, ty-r3*s12, -s3*c12,
+                                     a2, tx-r3*c12, s3*s12))
         {
-          const auto q2{q12-q1};
-          addCandidate({q1, q2, q3, q4});
+            addCandidate({q1,q12-q1,q3,q4});
+          }
+      }
+      else
+      {
+        // can divide by c3
+        const auto q4 = -(tz-r1)/c3;
+        for(auto q1 : solveType3(0, a2, tx - r3*c12 + q4*s3*s12,
+                                 a2, 0, ty - r3*s12 - q4*s3*c12))
+        {
+          addCandidate({q1,q12-q1,q3,q4});
         }
       }
     }
   }
 
-  const auto eMf{fMe_des.inverse()};
-  for(const auto &q_cand: q_candidates)
-  {
-    std::cout << " - Candidate solution: ";
-    for(auto &qi: q_cand)
-      std::cout << qi << " ";
-    std::cout << " (pose error is " << vpPoseVector(fMe(q_cand)*eMf).t().frobeniusNorm() << ")" << std::endl;
-  }
-
-
-
   return bestCandidate(q0);
 }
-
-#endif
 
 
 vpMatrix ecn::RobotRRRP::fJw(const vpColVector &q) const
