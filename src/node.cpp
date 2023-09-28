@@ -1,4 +1,4 @@
-#include <node.h>
+#include <ecn_manip/node.h>
 #include <urdf/model.h>
 
 namespace ecn

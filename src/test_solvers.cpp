@@ -1,4 +1,4 @@
-#include <trig_solvers.h>
+#include <ecn_manip/trig_solvers.h>
 #include <iostream>
 #include <algorithm>
 
