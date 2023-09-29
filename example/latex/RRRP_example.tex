@@ -8,7 +8,7 @@
 \inserttitle{Manipulator Modeling \& Control}
 \insertsubtitle{Example for the RRRP robot}
 
-\subsection*{Description of the robot}
+\section{Description of the robot}
 
 The considered robot is the one seen during the lectures:
 \begin{figure}[h!]\centering
@@ -46,7 +46,7 @@ $\Hom{0}{4} = \Hom{f}{w} = \left[\begin{matrix}- s_{12} c_3 & c_{12} & - s_3 s_{
     \end{center}
     We of course have ${}^f\mathbf{M}_e = {}^f\mathbf{M}_w{}^w\mathbf{M}_e$
 
-\subsection*{Solving the inverse model}
+\section{Solving the inverse model}
 
 When solving the inverse model, we want to find $(q_1, q_2, q_3, q_4)$ that solve:\\
 \begin{equation} \left[\begin{matrix}- s_{12} c_3 & c_{12} & - s_3 s_{12} & a_{2} c_1 - q_{4} s_3 s_{12} + r_{3} c_{12}\\c_3 c_{12} & s_{12} & s_3 c_{12} & a_{2} s_1 + q_{4} s_3 c_{12} + r_{3} s_{12}\\s_3 & 0 & - c_3 & - q_{4} c_3 + r_{1}\\0 & 0 & 0 & 1\end{matrix}\right] = \left[\begin{matrix}x_x & y_x & z_x & t_x\\x_y & y_y & z_y & t_y\\x_z & y_z & z_z & t_z\\0 & 0 & 0 & 1\end{matrix}\right]^* = {}^f\mathbf{M}_w^*
@@ -66,7 +66,7 @@ It will first apply ${}^f\mathbf{M}_w^* = {}^f\mathbf{M}_e^* \Hom{e}{w}$, then d
 
 
 
-\subsubsection*{Solving for $\mathbf{q_3}$}
+\subsection*{Solving for $\mathbf{q_3}$}
 
 In \eqref{model} we notice: $\left\{\begin{array}{ll}s_3 &= x_z \\ -c_3 &= z_z\end{array}\right.$  \\
 This can be written as a Type 3 equation:
@@ -89,19 +89,40 @@ We can thus solve it for $q_3$ with the following syntax:
     \end{lstlisting}
 \end{center}
 
-    \subsubsection*{Solving for $\mathbf{q_1}$ and $\mathbf{q_4}$}
+\subsection*{Solving for $\mathbf{q_{12} = q_1+q_2}$}
+
+The system $(y_x, y_y)$ will give the solutions of $q_1+q_2$ from a Type 3 equation. This solution will be used later to get $q_2$ when we know $q_1$:
+
+\begin{cppcode}
+  for(auto q12: solveType3(0, 1, yx, 1, 0, yy)
+    {
+        // q12 is q1+q2, let us carry on in this loop to get q1 and q4
+
+    }
+\end{cppcode}
+
+
+    \subsection*{Solving for $\mathbf{q_1}$ and $\mathbf{q_4}$}
     
-    From a valid value for $q_3$, it is tempting to use $t_z$ to solve $q_4$. Indeed it would write:
-    \begin{equation*}
+    From a valid value for $q_3$, it is tempting to use $t_z$ to solve $q_4$. Unfortunately this only works if $\cos(q_3) \neq 0$.\\
+    On the opposite, we notice that $(t_x, t_y)$ form a system of two unkowns $(q_1, q_4)$. Similarly, this only works when $\sin(q_3) \neq 0$ as in the other case $q_4$ would disappear from the equation.
+
+    We thus have to pick the best choice: rely $c_3$ or $s_3$. They cannot be both close to 0, so a simple choice is to use the one having the greatest absolute value.
+
+    \subsubsection{If $|\cos(q_3)| > |\sin(q_3)|$: solve $q_4$ first}
+
+    In this case we can use $t_z$ directly:
+        \begin{equation*}
     q_4 = \frac{r_1 - t_z}{\cos(q_3)}
-    \end{equation*}Unfortunately this only works if $\cos(q_3) \neq 0$.\\
-    On the opposite, we notice that $(t_x, t_y)$ form a system of two unkowns $(q_1, q_4)$:
-    \begin{equation}
-    \left\{\begin{array}{ll}
-            a_{2} c_1 - q_{4} s_3 s_{12} + r_{3} c_{12} &= t_x \\  a_{2} s_1 + q_{4} s_3 c_{12} + r_{3} s_{12} &= t_y
-            \end{array}\right.\label{eq:q14}
-    \end{equation}While we do not know the values of $q_1$ and $q_2$, we know from \eqref{model} the values of $s_{12}$ and $c_{12}$.\\
-    This makes \eqref{eq:q14} a Type 5 equation:
+    \end{equation*}
+
+    Then $q_1$ is now the only unknown in $(t_x,t_y)$, which makes it a Type 3 system for $q_1$.
+
+
+    \subsubsection{If $|\cos(q_3)| < |\sin(q_3)|$: solve $(q_1,q_4)$ together}
+
+    While we do not know the values of $q_1$ and $q_2$, we know from \eqref{model} the values of $s_{12}$ and $c_{12}$.\\
+    This makes $(t_x,t_y)$ a Type 5 equation:
     \begin{equation*}
     \left\{\begin{array}{l}X_1s_1 = Y_1+Z_1q_4 \\ X_2c_1 = Y_2+Z_2q_4\end{array}\right. \quad \text{ with } 
     \left\{\begin{array}{ccc}
@@ -115,10 +136,9 @@ We can thus solve it for $q_3$ with the following syntax:
     \begin{lstlisting}
     const auto s3 = sin(q3);    // we are inside the q3 loop so we know sin(q3)
     
-    for(auto q14: solveType5(a2, ty-r3*yy, -yx*s3, a2, tx-r3*yx, yy*s3))
+    for(auto [q1,q4]: solveType5(a2, ty-r3*yy, -yx*s3, a2, tx-r3*yx, yy*s3))
     {
-        auto q1 = q14.qi;   // extract joint i = 1
-        auto q4 = q14.qj;   // extract joint j = 4
+        // continue with this solution for q1 and q4
     
     }
     \end{lstlisting}
@@ -127,18 +147,19 @@ We can thus solve it for $q_3$ with the following syntax:
 
 \subsubsection*{Solving for $\mathbf{q_2}$ and adding the candidate solution}
 
-The system $(y_x, y_y)$ will give the solutions of $q_1+q_2$ from a Type 3 equation. Then $q_2$ can easily be computed as we now have $q_1$. As we have a full candidate, we can add it to the potential solutions.
+At this point we have a candidate for $(q_1,q_3,q_4)$ and we have the value of $q_{12}=q_1+q_2$.
+$q_2$ can this easily be computed, that makes a valid candidate solution to consider:
 
-    \begin{center}
-    \cppstyle \raggedright
-    \begin{lstlisting}
-    for(auto q12: solveType3(0, 1, yx, 1, 0, yy)
-    {
-        auto q2 = q12 - q1;
-        addCandidate({q1, q2, q3, q4});
-    }
-    \end{lstlisting}
-\end{center}
+\begin{cppcode}
+ const auto q2 = q12 - q1;
+ addCandidate({q1, q2, q3, q4});
+\end{cppcode}
+
+% \subsection{Picking the best candidate}
+%
+% Once all candidate solutions have been found, the best one has to be chosen according to some criteria.
+% The function \okt{bestCandidate(q0)} will do this choice with:
+%
 
 
 \end{document}

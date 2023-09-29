@@ -30,8 +30,14 @@ int main()
       std::cout << "q3 is -pi/2\n";
       q[2] = -M_PI/2;
     }
-    // check behavior if q4 out of bounds
+    // check if it works for sin(q3) = 0
     else if(i == 2)
+    {
+      std::cout << "q3 is 0\n";
+      q[2] = 0;
+    }
+    // check behavior if q4 out of bounds
+    else if(i == 3)
     {
       std::cout << "q4 out of bounds\n";
       q[3] = robot.jointMax()[3] + 1.;
