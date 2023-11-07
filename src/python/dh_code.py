@@ -105,7 +105,7 @@ def load_yaml(filename):
             T.append(Homogeneous(joint[iA]*X, Rot(joint[iAlpha],X)) * Homogeneous(joint[iR]*Z, Rot(joint[iTheta],Z)))
             # joint axis, always Z in DH convention
 
-            # but the positive direction is yet to be dissuaded
+            # but the positive direction is yet to be decided
             qExpressionBasedOnJoinType = None
             if(this_prism):
                 qExpressionBasedOnJoinType = joint[iR]
