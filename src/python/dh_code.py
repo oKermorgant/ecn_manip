@@ -104,7 +104,19 @@ def load_yaml(filename):
             # transformation matrix
             T.append(Homogeneous(joint[iA]*X, Rot(joint[iAlpha],X)) * Homogeneous(joint[iR]*Z, Rot(joint[iTheta],Z)))
             # joint axis, always Z in DH convention
-            u.append(Z)
+
+            # but the positive direction is yet to be dissuaded
+            qExpressionBasedOnJoinType = None
+            if(this_prism):
+                qExpressionBasedOnJoinType = joint[iR]
+            else:
+                qExpressionBasedOnJoinType = joint[iTheta]
+                    
+            qExpressionIsolated = qExpressionBasedOnJoinType.subs({i:0 for i in qExpressionBasedOnJoinType.free_symbols if "q" not in str(i)})
+            if(qExpressionIsolated.could_extract_minus_sign()):
+                u.append(-Z)
+            else:
+                u.append(Z)
     return T, u, prism, fM0, eMw
 
 
