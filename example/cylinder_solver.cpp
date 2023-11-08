@@ -2,13 +2,13 @@
 #include <iostream>
 #include <algorithm>
 #include <visp/vpHomogeneousMatrix.h>
-#include "robot_rrrp.h"
+#include "robot_cylinder.h"
 
 using namespace ecn;
 
 int main()
 {
-  RobotRRRP robot; 
+  RobotCYL robot;
 
 
   for(auto i = 0 ; i < 6; ++i)
@@ -17,25 +17,12 @@ int main()
     auto q = robot.jointRand();
 
 
-    // check it works for sin(q3) = 0
+    // check it works for cos(q5) = 1
     if(i == 3)
     {
-      std::cout << "Special case: s3 = 0\n";
-      q[2] = 0;
+      std::cout << "Special case: q5 = 0\n";
+      q[4] = 0;
     }
-    // check it works for cos(q3) = 0
-    if(i == 4)
-    {
-      std::cout << "Special case: c3 = 0\n";
-      q[2] = M_PI/2;
-    }
-    // check behavior if q4 out of bounds
-    if(i == 5)
-    {
-      std::cout << "Special case: q4 out of bounds\n";
-      q[3] = robot.jointMax()[3] + 1.;
-    }
-
 
     std::cout << "Source position: " << q.t() << std::endl;
 
@@ -43,9 +30,9 @@ int main()
     auto M = robot.fMe(q);
 
     // try to find q back from M
-    auto q_solution = robot.inverseGeometry(M, robot.jointRand());
+    auto q_solution = robot.inverseGeometry(M, q + 0.1*robot.jointRand());
     std::cout << "Chosen solution: " << q_solution.t();
-    std::cout << "\n pose error: " << vpPoseVector(M*robot.fMe(q_solution).inverse()).t().frobeniusNorm() << std::endl;
+    std::cout << "\n  pose error: " << vpPoseVector(M*robot.fMe(q_solution).inverse()).t().frobeniusNorm() << std::endl;
 
    /* q_solution = robot.iterativeIK(robot.fMe(q), robot.jointRand());
     std::cout << "\n Iterative solution : " << q_solution.t();
