@@ -104,7 +104,11 @@ def load_yaml(filename):
             # transformation matrix
             T.append(Homogeneous(joint[iA]*X, Rot(joint[iAlpha],X)) * Homogeneous(joint[iR]*Z, Rot(joint[iTheta],Z)))
             # joint axis, always Z in DH convention
-            u.append(Z)
+            some_q = f'{joint[iR]}_{joint[iTheta]}'.replace(' ','')
+            if '-q' in some_q:
+                u.append(-Z)
+            else:
+                u.append(Z)
     return T, u, prism, fM0, eMw
 
 
@@ -592,9 +596,9 @@ if __name__ == '__main__':
             print('\n//Model constants')
             lines = []
             for key in cst_symb:
-                line = f'const auto {key}{{{cst_symb[key]}}}'
-                while line[-2] == '0':
-                    line = line[:-2] + ';'
+                line = f'const auto {key}{{{cst_symb[key]}'.rstrip('0') + '};'
+                #while line[-2] == '0':
+                    #line = line[:-2] + '};'
                 lines.append(line)
             print('\n'.join(sorted(lines)))
             print('// End of constants')
