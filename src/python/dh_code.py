@@ -78,7 +78,7 @@ def load_yaml(filename):
     print('Building intermediary matrices...')
     
     prism = []     # True if prismatic
-    T = []         # relative T(i-1,i) 
+    T = []         # relative T(i-1,i)
     u = []         # joint axis
     fM0 = None
     eMw = None
@@ -128,6 +128,7 @@ def simp_rpy(rpy):
                 break
     return rpy
 
+
 def simp_axis(u):
     '''
     Convert x y z axis to real 1 and 0
@@ -138,6 +139,7 @@ def simp_axis(u):
             if abs(u[i]-v) < 1e-5:
                 u[i] = v
     return sp.Matrix(u).reshape(3,1)
+
 
 def simp_val(val, idx):
     '''
@@ -165,6 +167,7 @@ def load_urdf(filename):
             return check_output(('xacro ' + filename).split(), encoding='UTF8')
         return urdf
         
+
 def parse_urdf(filename, base_frame, ee_frame, use_joint_names = False):
     '''
     Parse the URDF file to extract the geometrical parameters between given frames
@@ -202,8 +205,8 @@ def parse_urdf(filename, base_frame, ee_frame, use_joint_names = False):
             sys.exit(0)
             
         joint_path.append(i)
-        cur_link = parents[i]        
-    joint_path.reverse()     
+        cur_link = parents[i]
+    joint_path.reverse()
     
     # build robot geometry
     n = 0
@@ -245,8 +248,6 @@ def parse_urdf(filename, base_frame, ee_frame, use_joint_names = False):
             else:
                 M = M*Mi
             n += 1
-            #print 'joint', n, ': from', parent, 'to', child
-            #print M
             # prismatic?
             prism.append(joint.get('type') == 'prismatic')
             # axis
@@ -257,7 +258,7 @@ def parse_urdf(filename, base_frame, ee_frame, use_joint_names = False):
             if use_joint_names:
                 q = sp.Symbol(joint.get('name'))
             else:
-                q = sp.Symbol('q%i'%n)
+                q = sp.Symbol(f'q{n}')
             all_q.append(q)
             if prism[-1]:
                 T.append(M * Homogeneous(q*u[-1], Rot(0, X)))
@@ -277,7 +278,7 @@ def parse_urdf(filename, base_frame, ee_frame, use_joint_names = False):
                     nonI = True
             
         if nonI:
-            wMe = M      
+            wMe = M
             print('Constant matrix wMe between', joints[last_moving].find('child').get('link'), 'and', ee_frame)
     return T, u, prism, fM0, wMe, all_q
 
@@ -288,39 +289,22 @@ def human_sort(l):
     alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
     l.sort( key=alphanum_key )
 
+
 def simp_matrix(M):
     '''
     simplify matrix for old versions of sympy
     '''
     for i in range(M.rows):
-        for j in range(M.cols):       
+        for j in range(M.cols):
             M[i,j] = sp.trigsimp(M[i,j])
-            # check for these strange small numbers
-            '''
-            s = str(M[i,j])
-            almost0 = False
-            for k in range(20, 50):
-                if 'e-' + str(k) in s:
-                    almost0 = True
-                    break
-            
-            if almost0:
-                for k in range(20, 50):
-                    while 'e-' + str(k) in s:
-                        m = s.find('e-' + str(k))
-                        n = m
-                        while s[n] != '.':
-                            n -= 1
-                        s = s.replace(s[n-1:m+4], '0')
-                M[i,j] = sp.trigsimp(parse_expr(s))
-            '''            
-    return M    
+    return M
+
 
 def compute_Ji(joint_prism, u0, p0, i):
     '''
     Compute the i-eth column of the Jacobian (used for multiprocessing)
     '''
-    if joint_prism[i] == None:  # fixed joint
+    if joint_prism[i] is None:  # fixed joint
         return sp.zeros(6,0)
     
     if joint_prism[i]:
@@ -333,7 +317,6 @@ def compute_Ji(joint_prism, u0, p0, i):
         Jw = simp_matrix(u0[i])
     print('   J_%i' % (i+1))
     return (i, Jv.col_join(Jw))    # register this column as column i
-    #return Jv.col_join(Jw)
 
 
 def replaceFctQ(s, cDef, cUse, q = 'q', q_vector = True):
@@ -342,7 +325,6 @@ def replaceFctQ(s, cDef, cUse, q = 'q', q_vector = True):
     '''
     fctList = ('cos', 'sin')
     pmDict = {'+':'', '-':'m'}
-    defCount = len(cDef)
     # replace with all expressions already found
     for sf in cUse:
         s = s.replace(sf, cUse[sf])
@@ -352,10 +334,10 @@ def replaceFctQ(s, cDef, cUse, q = 'q', q_vector = True):
         while True:
             pos = s.find(fct)
             if pos != -1:
-                end = pos + s[pos:].find(')')                   
+                end = pos + s[pos:].find(')')
                 sf = s[pos:end+1]                                       # sf = cos(q1 + q2 - q3)
                 expr = s[pos+len(fct)+1:end].split(' ')                 # expr = [q1,+,q2,-,q3]
-                cUse[sf] = fct[0]                
+                cUse[sf] = fct[0]
                 sUse = fct + '('
                 for v in expr:
                     if 'q' in v:
@@ -376,38 +358,40 @@ def replaceFctQ(s, cDef, cUse, q = 'q', q_vector = True):
             
     # other occurences of qi
     for i in range(100):
-        s = s.replace('q%i' % (i+1), '%s[%i]' % (q, i))
+        s = s.replace(f'q{i+1}', f'{q}[{i}]')
     return s.replace('00000000000000', '').replace('0000000000000', ''), cDef, cUse
 
-def exportCpp(M, s='M', q = 'q', col_offset = 0, q_vector = True):
-        '''
-        Writes the C++ code corresponding to a given matrix
-        '''
-        cDef={}
-        cUse={}
-        M_lines = []
 
-        # write each element
-        sRows = ''
-        sCols = ''
-        for i in range(M.rows):
-                if M.rows > 1:
-                        sRows = '[' + str(i) + ']'
-                for j in range(M.cols):
-                        if M.cols > 1:
-                                sCols = '[' + str(j+col_offset) + ']'
-                        ms, cDef, cUse = replaceFctQ(str(sp.N(M[i,j])), cDef, cUse, q, q_vector)
-                        M_lines.append(s + sRows + sCols + ' = ' + ms + ';')
-                        
-        # print definitions
-        cDef = list(cDef.values())
-        human_sort(cDef)
-        for line in cDef:
-            print('   ',line)
-        # print matrix content
-        for line in M_lines:
-            print('   ', line)
+def exportCpp(M, s='M', q = 'q', col_offset = 0, q_vector = True):
+    '''
+    Writes the C++ code corresponding to a given matrix
+    '''
+    cDef={}
+    cUse={}
+    M_lines = []
+
+    # write each element
+    sRows = ''
+    sCols = ''
+    for i in range(M.rows):
+        if M.rows > 1:
+            sRows = '[' + str(i) + ']'
+        for j in range(M.cols):
+            if M.cols > 1:
+                sCols = '[' + str(j+col_offset) + ']'
+            ms, cDef, cUse = replaceFctQ(str(sp.N(M[i,j])), cDef, cUse, q, q_vector)
+            M_lines.append(s + sRows + sCols + ' = ' + ms + ';')
+
+    # print definitions
+    cDef = list(cDef.values())
+    human_sort(cDef)
+    for line in cDef:
+        print('   ',line)
+    # print matrix content
+    for line in M_lines:
+        print('   ', line)
             
+
 def ComputeDK_J(T, u, prism, comp_all = False):
      # get number of joints
     dof = len(T)
@@ -430,7 +414,7 @@ def ComputeDK_J(T, u, prism, comp_all = False):
     
     R0 = [M[:3,:3] for M in T0]
     # joint axis expressed in frame 0
-    u0 = [R0[i]*u[i] for i in range(dof)] 
+    u0 = [R0[i]*u[i] for i in range(dof)]
     
     all_J = []
     

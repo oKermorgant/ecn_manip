@@ -27,13 +27,24 @@
   
   \subsection{Installing and loading the lab in Qt Creator}
   
-  This project uses the ROS\footnote{Robot Operating System, http://www.ros.org} framework which imposes some particular steps to configure the environment. An actual ROS course will be held in the second semester, for now just configure as follows:
-  
+  This project uses the ROS 2\footnote{Robot Operating System, http://www.ros.org} framework which imposes some particular steps to configure the environment. An actual ROS course will be held in the second semester, for now just configure as follows:
+
   \begin{enumerate}
-    \item Open a terminal and download the lab package: \okt{rosdl ecn_manip}.
-    \item Run Qt Creator from the top screen icon
-    \item Load the \okt{ros/src/ecn_manip/CMakeLists.txt} file through \okt{File...open project}
-    \item QtCreator asks for a compilation folder: give \okt{ros/build/ecn_manip}
+    \item Open a terminal and go to the ROS 2 workspace:
+    \begin{bashcodelarge}
+mkdir -p ~/ros2/src
+cd ~/ros2/src
+    \end{bashcodelarge}
+    \item Download this package:
+\begin{bashcodelarge}
+git clone https://github.com/oKermorgant/ecn_manip
+\end{bashcodelarge}
+    \item Configure Qt Creator and load the project:
+ \begin{bashcodelarge}
+cd ecn_manip
+ideconf
+\end{bashcodelarge}
+    \item Load the \okt{ros2/src/ecn_manip/CMakeLists.txt} file through \okt{File...open project}
     \item The files should be displayed and ready to compile and run
     \item Compilation is done by clicking the bottom-left hammer
     \item Run your program with the green triangle. It can be stopped by clicking on the red square
@@ -104,9 +115,9 @@
   Once everything is installed and compiled, the base simulation can be run from a terminal (only 1 line depending on the robot you work on):
   \cppstyle
   \begin{lstlisting}
-  roslaunch ecn_manip turret.launch
-  roslaunch ecn_manip kr16.launch
-  roslaunch ecn_manip ur10.launch
+  ros2 launch ecn_manip simulation_launch.py robot:=turret
+  ros2 launch ecn_manip simulation_launch.py robot:=kr16
+  ros2 launch ecn_manip simulation_launch.py robot:=ur10
   \end{lstlisting}
   
   This will display two windows:
@@ -234,8 +245,7 @@
   
   3D transforms can be easily changed between homogeneous matrix, rotation matrix, translation vector or $\theta\u$ vector. Another type called a pose vector
   consists in the full $(\mathbf{t}, \theta\u)$ vector of dimension 6:
-  \cppstyle
-  \begin{lstlisting}
+  \begin{cppcode}
   vpHomogeneousMatrix M;
   vpPoseVector p;
   vpRotationMatrix R;
@@ -252,7 +262,7 @@
   
   // compute inverse transform
   M = M.inverse();
-  \end{lstlisting}
+  \end{cppcode}
   
   Two utility functions are provided to put a matrix or vector into a bigger one:
   \begin{itemize}
@@ -281,6 +291,12 @@
     r3: 0.1
     a4: 0.7
   \end{lstlisting}
+
+  Then just run:
+  \begin{bashcode}
+   ros2 launch ecn_manip mdh_launch.py mdh:=<your file.yaml>
+  \end{bashcode}
+
 
   This can be useful when testing your direct geometric model.
 

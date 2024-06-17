@@ -41,6 +41,9 @@ target_link_libraries(test_solvers ecn_manip)
 add_executable(example_RRRP example/robot_rrrp.h example/robot_rrrp.cpp example/rrrp_solver.cpp)
 target_link_libraries(example_RRRP ecn_manip)
 
+add_executable(example_cylinder example/robot_cylinder.h example/robot_cylinder.cpp example/cylinder_solver.cpp)
+target_link_libraries(example_cylinder ecn_manip)
+
 #ament_target_dependencies(example_RRRP rclcpp ecn_manip tf2_ros)
 #ament_target_dependencies(test_solvers rclcpp ecn_manip tf2_ros)
 

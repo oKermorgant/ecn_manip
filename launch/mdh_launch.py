@@ -62,6 +62,7 @@ class Joint:
             except:
                 # joint value
                 q = val.free_symbols.pop()
+                print(f'Found symbol {q}')
 
                 self.dir = sp.diff(val,q)
                 val = val.subs(q, 0.)
