@@ -59,7 +59,7 @@ def load_yaml(filename):
     with open(filename) as f:
         robot = yaml.safe_load(f)
     robot['keys'] = [k for k in robot]
-    robot = Bunch(robot)  
+    robot = Bunch(robot)
 
     # get ordering
     if 'notation' in robot.keys:

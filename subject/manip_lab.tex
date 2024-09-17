@@ -39,12 +39,20 @@ cd ~/ros2/src
 \begin{bashcodelarge}
 git clone https://github.com/oKermorgant/ecn_manip
 \end{bashcodelarge}
-    \item Configure Qt Creator and load the project:
+\item Compile the package with ROS 2
  \begin{bashcodelarge}
 cd ecn_manip
-ideconf
+ros2ws
+colbuild -t
+\end{bashcodelarge}
+\item Configure Qt Creator and load the project:
+ \begin{bashcodelarge}
+ideconf # or gqt on older VMs
 \end{bashcodelarge}
     \item Load the \okt{ros2/src/ecn_manip/CMakeLists.txt} file through \okt{File...open project}
+    \begin{itemize}
+     \item You can also right-click open the file with "Qt Creator for ROS 2"
+    \end{itemize}
     \item The files should be displayed and ready to compile and run
     \item Compilation is done by clicking the bottom-left hammer
     \item Run your program with the green triangle. It can be stopped by clicking on the red square
@@ -60,8 +68,7 @@ ideconf
     \item \okt{robot_ur10.cpp}: model of the Universal Robot UR-10
   \end{itemize}
   We will use the ViSP\footnote{Visual Servoing Platform, http://visp.inria.fr} library to manipulate mathematical vectors and matrices, including frame transforms, rotations, etc. The main classes are detailed in Appendix \ref{visp}.\\
-  At the end of the lab, you should upload them through the \link{http://pagesperso.ls2n.fr/~kermorgant-o/student links.php}{portal on my website}
-  
+
   \section{The robots}
   
   \def\wMe{{}^w\M_e}
