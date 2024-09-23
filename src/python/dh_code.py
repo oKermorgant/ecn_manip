@@ -7,17 +7,17 @@ C++ code generation for Modified Denavit-Hartenberg parameters and URDF files
 python dh_code.py file.yml (from yaml file)
 python dh_code.py file.urdf base effector (from URDF file)
 
-author: Olivier Kermorgant, ICube Laboratory 
+author: Olivier Kermorgant, ICube Laboratory 2013
 '''
 
 import yaml
 from lxml import etree
-import sys, os
+import sys
+import os
 import sympy as sp
 from sympy.parsing.sympy_parser import parse_expr
 from pylab import pi, array, norm
 import re
-from multiprocessing import Pool
 import argparse
 from subprocess import check_output
 
@@ -31,15 +31,18 @@ cst_symb = {}
 def sk(u):
     return sp.Matrix([[0,-u[2],u[1]],[u[2],0,-u[0]],[-u[1],u[0],0]])
 
+
 def Rot(theta,u):
     R = sp.cos(theta)*sp.eye(3) + sp.sin(theta)*sk(u) + (1-sp.cos(theta))*(u*u.transpose())
     return sp.Matrix(R)
+
 
 def Rxyz(rpy):
     '''
     Rotation matrix in X - Y - Z convention, so multiply the matrices in reversed order
     '''
     return Rot(rpy[2],Z)*Rot(rpy[1],Y)*Rot(rpy[0],X)
+
 
 def Homogeneous(t, R):
     '''
@@ -48,9 +51,11 @@ def Homogeneous(t, R):
     M = simp_matrix((R.row_join(t)).col_join(sp.Matrix([[0,0,0,1]])))
     return M
 
+
 class Bunch(object):
     def __init__(self, adict):
         self.__dict__.update(adict)
+
 
 def load_yaml(filename):
     '''
@@ -366,9 +371,19 @@ def exportCpp(M, s='M', q = 'q', col_offset = 0, q_vector = True):
     '''
     Writes the C++ code corresponding to a given matrix
     '''
-    cDef={}
-    cUse={}
+    cDef = {}
+    cUse = {}
     M_lines = []
+
+    # print free variables to initialize
+    if M.free_symbols:
+        numerical = sorted(map(str, M.free_symbols), key = lambda s: s[::-1])
+        print('    // numerical values to initialize')
+        for v in numerical:
+            if v.startswith(q):
+                continue
+            print(f'    const auto {v}{{}};')
+    print()
 
     # write each element
     sRows = ''
@@ -393,7 +408,7 @@ def exportCpp(M, s='M', q = 'q', col_offset = 0, q_vector = True):
             
 
 def ComputeDK_J(T, u, prism, comp_all = False):
-     # get number of joints
+    # get number of joints
     dof = len(T)
     
     # Transform matrices
@@ -407,7 +422,7 @@ def ComputeDK_J(T, u, prism, comp_all = False):
             T0.append(simp_matrix(T0[-1]*T[i]))
         print('  T %i/0' % (i+1))
         
-    # Jacobian   
+    # Jacobian
     # Rotation of each frame to go to frame 0
     print('')
     print('Building kinematic model...')
@@ -425,16 +440,6 @@ def ComputeDK_J(T, u, prism, comp_all = False):
     for ee in ee_J:
         # origin of each frame expressed in frame 0
         p0 = [T0[i][:3,3] for i in range(ee)]
-                    
-        # build Jacobian
-        # Sympy + multithreading bug = argument is not an mpz
-        #pool = Pool()
-        #results = []
-        #for i in range(ee):
-            ## add this column to pool
-            #results.append(pool.apply_async(compute_Ji, args=(prism, u0, p0, i)))
-        #iJ = [result.get() for result in results]
-        #pool.close()  
         
         iJ = [compute_Ji(prism, u0, p0, i) for i in range(ee)]
 
@@ -444,11 +449,11 @@ def ComputeDK_J(T, u, prism, comp_all = False):
             for k,iJi in iJ:
                 if k == i:
                     Js[:,i] = iJi
-                    #Js = Js.row_join(iJi)
         all_J.append(Js.copy())
     print('')
   
     return T0, all_J
+
 
 def latex_print(M):
     s = sp.latex(M)
@@ -473,7 +478,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-q', metavar='q', help='How the joint vector appears in the code',default='q')
     parser.add_argument('-T', metavar='M', help='How the pose matrix appears in the code',default='M')
-    parser.add_argument('-J', metavar='J', help='How the Jacobian matrix appears in the code',default='J') 
+    parser.add_argument('-J', metavar='J', help='How the Jacobian matrix appears in the code',default='J')
     parser.add_argument('--all_J', action='store_true', help='Computes the Jacobian of all frames',default=False)
     parser.add_argument('--only-fixed', action='store_true', help='Only computes the fixed matrices, before and after the arm',default=False)
     parser.add_argument('--display', action='store_true', help='Prints the full model',default=False)
@@ -493,8 +498,8 @@ if __name__ == '__main__':
 
     # check robot description file
     if not os.path.lexists(args.files[0]):
-            print('File', args.files[0], 'does not exist')
-            sys.exit(0)
+        print('File', args.files[0], 'does not exist')
+        sys.exit(0)
     fM0 = wMe = None
     
     # load into symbolic
@@ -516,7 +521,7 @@ if __name__ == '__main__':
 
     fixed_M = ((wMe, 'wMe','end-effector'), (fM0,'fM0','base frame'))
     for M,symbol,title in fixed_M:
-        if M != None:
+        if M is not None:
             print('')
             print(f'Building {symbol} code...')
             print('')
