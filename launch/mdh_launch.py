@@ -43,7 +43,10 @@ def add_joint(name, jtype, parent, child, axis=None, xyz=None, rpy=None):
 
 def Homogeneous(t, tu):
     Rx = Rotation.from_rotvec(tu)
-    Rt = np.hstack((Rx.as_matrix(),np.array(t).reshape(3,1)))
+    try:
+        Rt = np.hstack((Rx.as_matrix(),np.array(t).reshape(3,1)))
+    except:
+        Rt = np.hstack((Rx.as_dcm(),np.array(t).reshape(3,1)))
     return np.vstack((Rt, [0,0,0,1]))
 
 
