@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1307</width>
-    <height>720</height>
+    <height>744</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -158,7 +158,7 @@
       <x>10</x>
       <y>170</y>
       <width>321</width>
-      <height>511</height>
+      <height>531</height>
      </rect>
     </property>
     <property name="tabPosition">
@@ -478,7 +478,7 @@
       <x>340</x>
       <y>40</y>
       <width>961</width>
-      <height>641</height>
+      <height>661</height>
      </rect>
     </property>
     <property name="currentIndex">

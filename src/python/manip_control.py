@@ -80,23 +80,22 @@ class manipControl(QtWidgets.QMainWindow):
                     self.ui.spaceTabs.setCurrentIndex(i)
                 break
             
-    def ts_update(self):        
+    def ts_update(self):
         sp = self.ui.ts_slider.value()/100.+1
         self.config['switch_time'] = sp
         self.ui.ts_display.setText(str(sp) + ' s')
 
-    def gain_update(self):        
+    def gain_update(self):
         sp = self.ui.gain_slider.value()/100.+1
         self.config['lambda'] = sp
-        self.ui.gain_display.setText(str(sp))   
+        self.ui.gain_display.setText(str(sp))
         
     def twist_center(self):
         for la in ('v','w'):
             for ax in ('x','y','z'):
-                getattr(self.ui, '{}{}_slider'.format(la, ax)).setValue(50.)
+                getattr(self.ui, '{}{}_slider'.format(la, ax)).setValue(50)
         self.vel_update()
-        
-        
+
     def vel_update(self):
         for la in ('v','w'):
             for ax in ('x','y','z'):
@@ -109,7 +108,7 @@ class manipControl(QtWidgets.QMainWindow):
                     u = 'rad/s'
                     sp *= 5
                     setattr(self.twist_msg.angular, ax, sp)
-                getattr(self.ui, 'twist_'+v).setText(v+': {} {}'.format(sp, u))
+                getattr(self.ui, 'twist_'+v).setText(v+f': {sp:.2f} {u}')
                 
     def now(self):
         s,ns = self.node.get_clock().now().seconds_nanoseconds()
