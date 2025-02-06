@@ -156,7 +156,7 @@ jointState.position = [0.]*N
 jointState.name = arm.names
 
 def timer_update():
-    jointState.position = state.qSet
+    jointState.position = [float(v) for v in state.qSet]
     jointState.header.stamp = node.get_clock().now().to_msg()
     cmdPub.publish(jointState)
 
