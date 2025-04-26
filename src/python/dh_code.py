@@ -28,6 +28,7 @@ Z = sp.Matrix([0,0,1]).reshape(3,1)
 Z4 = sp.Matrix([0,0,0,1]).reshape(4,1)
 cst_symb = {}
 
+
 def sk(u):
     return sp.Matrix([[0,-u[2],u[1]],[u[2],0,-u[0]],[-u[1],u[0],0]])
 
@@ -68,15 +69,17 @@ def load_yaml(filename):
 
     # get ordering
     if 'notation' in robot.keys:
-            iAlpha = robot.notation.index('alpha')
-            iA = robot.notation.index('a')
-            iR = robot.notation.index('r')
-            iTheta = robot.notation.index('theta')
+        iAlpha = robot.notation.index('alpha')
+        iA = robot.notation.index('a')
+        iR = robot.notation.index('r')
+        iTheta = robot.notation.index('theta')
     else:
-            iAlpha = 0
-            iA = 1
-            iR = 2
-            iTheta = 3
+        iAlpha = 0
+        iA = 1
+        iR = 2
+        iTheta = 3
+
+    dh = robot.dh if 'dh' in robot.keys else 'mdh'
             
     # change into symbolic
     print('')
@@ -90,24 +93,40 @@ def load_yaml(filename):
     
     for q,joint in robot.joint.items():
         this_prism = None
-        if type(joint[iR]) == str:
-            if 'q' in joint[iR]:
+
+        theta = joint[iTheta]
+        alpha = joint[iAlpha]
+        r = joint[iR]
+        a = joint[iA]
+
+        if isinstance(r, str):
+            if 'q' in r:
                 this_prism = True
-        if type(joint[iTheta]) == str:
-            if 'q' in joint[iTheta]:
+        if isinstance(theta, str):
+            if 'q' in theta:
                 this_prism = False
         if this_prism is not None:
             prism.append(this_prism)
         for i in range(4):
-            if type(joint[i]) == str:
+            if isinstance(joint[i], str):
                 joint[i] = parse_expr(joint[i])
+
+        theta = joint[iTheta]
+        alpha = joint[iAlpha]
+        r = joint[iR]
+        a = joint[iA]
+
+        if dh == 'dh':
+            M = Homogeneous(r*Z, Rot(theta,Z)) * Homogeneous(a*X, Rot(alpha,X))
+        else:
+            M = Homogeneous(a*X, Rot(alpha,X)) * Homogeneous(r*Z, Rot(theta,Z))
         if q == 'f':
-            fM0 = Homogeneous(joint[iA]*X, Rot(joint[iAlpha],X)) * Homogeneous(joint[iR]*Z, Rot(joint[iTheta],Z))
+            fM0 = M
         elif q == 'e':
-            eMw = Homogeneous(joint[iA]*X, Rot(joint[iAlpha],X)) * Homogeneous(joint[iR]*Z, Rot(joint[iTheta],Z))
+            eMw = M
         else:
             # transformation matrix
-            T.append(Homogeneous(joint[iA]*X, Rot(joint[iAlpha],X)) * Homogeneous(joint[iR]*Z, Rot(joint[iTheta],Z)))
+            T.append(M)
             # joint axis, always Z in DH convention
             some_q = f'{joint[iR]}_{joint[iTheta]}'.replace(' ','')
             if '-q' in some_q:
@@ -457,14 +476,15 @@ def ComputeDK_J(T, u, prism, comp_all = False):
 
 def latex_print(M):
     s = sp.latex(M)
-    s = s.replace('\\cos', 'c').replace('\\sin', 's')
-    n = max([i for i in range(1,10) if '_{'+str(i)+'}' in s])
-    single = '{{\\left(q_{{{}}} \\right)}}'
-    double = '{{\\left(q_{{{}}} + q_{{{}}} \\right)}}'
-    for i1 in range(1, n+1):
-        s = s.replace(single.format(i1), '_{}'.format(i1))
-        for i2 in range(1,n):
-            s = s.replace(double.format(i1,i2), '_{{{}{}}}'.format(i1,i2))
+
+    # s = s.replace.replace
+    single = '{}{{\\left(q_{{{}}} \\right)}}'
+    double = '{}{{\\left(q_{{{}}} + q_{{{}}} \\right)}}'
+    for fct,f in (('\\cos', 'c'), ('\\sin', 's')):
+        for i1 in range(1, 10):
+            s = s.replace(single.format(fct,i1), f'{f}_{i1}')
+            for i2 in range(1,10):
+                s = s.replace(double.format(fct,i1,i2), f'{f}_{{{i1}{i2}}}')
     print(s)
     
 
@@ -483,7 +503,7 @@ if __name__ == '__main__':
     parser.add_argument('--only-fixed', action='store_true', help='Only computes the fixed matrices, before and after the arm',default=False)
     parser.add_argument('--display', action='store_true', help='Prints the full model',default=False)
     parser.add_argument('--wrist', action='store_true', help='Prints the model of the wrist to help computing inverse geometry',default=False)
-    parser.add_argument('--latex', action='store_true', help='Prints direct model and Jacobian in Latex style',default=False)
+    parser.add_argument('--latex', action='store_true', help='Prints matrices in Latex style',default=False)
     parser.add_argument('--only-DGM', action='store_true', help='Only DGM',default=False)
     parser.add_argument('--fMe', action='store_true', help='Prints the full fMe transform',default=False)
     parser.add_argument('--eJe', action='store_true', help='Prints the eJe Jacobian',default=False)
@@ -530,9 +550,12 @@ if __name__ == '__main__':
             print(f'    // End of {title} code')
 
     if args.only_fixed:
+        for M,symbol,title in fixed_M:
+            if M is not None:
+                print(f'\n\nExpression for {symbol}')
+                pretty_print(M)
         sys.exit(0)
 
-    
     if args.only_DGM:
     
         # Transform matrices
@@ -551,9 +574,7 @@ if __name__ == '__main__':
         print('    // Generated pose code')
         exportCpp(T0[-1], args.T)
         print('    // End of pose code')
-        sys.exit(0)
         
-    
     else:
         
         # Do the computation
@@ -593,21 +614,22 @@ if __name__ == '__main__':
             print('// End of constants')
         
     if args.display:
-        print('\n\nFull model from root to wrist frame:')
+        print(f'\n\nFull model from root to wrist frame 0M{len(T)}:')
         print('\nTranslation')
         pretty_print(T0[-1][:3,3])
         print('\nRotation')
         pretty_print(T0[-1][:3,:3])
-        
-                
-    if args.wrist and dof == 6:        
+
+    if args.wrist:
         print('\n\nDecomposing DGM with regards to frame 3:')
         
-        print('\nTranslation from root to wrist frame 0T6 (should only depend on q1 q2 q3):\n')
+        print(f'\nTranslation from root to wrist frame 0T{len(T)} (should only depend on q1 q2 q3):\n')
         pretty_print(T0[-1][:3,3])
         
-        print('\n\nRotation 3R6 from frame 3 to wrist frame (should only depend on q4 q5 q6):\n')
-        R36 = simp_matrix(T[3][:3,:3] * T[4][:3,:3] * T[5][:3,:3])
+        print(f'\n\nRotation 3R{len(T)} from frame 3 to wrist frame (should only depend on q4+):\n')
+        from functools import reduce  # Required in Python 3
+        import operator
+        R36 = simp_matrix(reduce(operator.mul, [Ti[:3,:3] for Ti in T[3:]], 1))
         pretty_print(R36)
             
         print('\n\nCode for the rotation 0R3 from root frame to frame 3:\n')
@@ -620,15 +642,14 @@ if __name__ == '__main__':
         print('\n\nModel from base to end-effector frame fMe')
     else:
         print('\n\nModel from base to end-effector frame fMe for q=0')
-        for n in range(len(T0)):
+        for n in range(len(T0)+1):
             fMe = fMe.subs(sp.Symbol(f'q{n}'), 0)
 
     fMe = simp_matrix(fMe)
     pretty_print(fMe)
                 
-    if args.all_J:
+    if args.all_J and not args.only_DGM:
         pretty_print(all_J[-1])
-
 
     if args.eJe:
         O3 = sp.zeros(3,3)

@@ -150,6 +150,8 @@ TwoJointsCandidate solveType7(double x, double y, double z1, double z2, double w
 TwoJointsCandidate solveType8(double x, double y, double z1, double z2)
 {
   const auto cj = (sqr(z1)+sqr(z2)-sqr(x)-sqr(y))/(2*x*y);
+  if(std::abs(cj) > 1)
+    return {};
   const auto sj = sqrt(1-sqr(cj));
   return toTwoSolutions([&](int e)
   {
@@ -157,6 +159,7 @@ TwoJointsCandidate solveType8(double x, double y, double z1, double z2)
     const auto b1 = x+y*cj;
     const auto b2 = y*e*sj;
     const auto b1b2 = sqr(b1)+sqr(b2);
+    const auto ci{atan2((b1*z2-b2*z1)/b1b2, (b1*z1+b2*z2)/b1b2)};
     return TwoJoints{atan2((b1*z2-b2*z1)/b1b2, (b1*z1+b2*z2)/b1b2),qj};
   });
 }

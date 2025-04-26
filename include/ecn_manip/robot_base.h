@@ -101,11 +101,10 @@ public:
   }
 
   // inverse geometry methods
-  void addCandidate(std::vector<double> q_candidate) const;
+  void addCandidate(std::vector<double> q_candidate, std::optional<vpHomogeneousMatrix> Md = {}) const;
   vpColVector bestCandidate(const vpColVector &q0, std::vector<double> weights = {}) const;
 
   // to be overloaded
-  virtual void init_wMe() = 0;
   virtual vpHomogeneousMatrix fMw(const vpColVector &q) const = 0;
   virtual vpColVector inverseGeometry(const vpHomogeneousMatrix &fMe_des, const vpColVector &q0) const = 0;
   virtual vpMatrix fJw(const vpColVector &q) const = 0;

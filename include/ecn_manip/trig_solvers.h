@@ -29,7 +29,7 @@ inline std::pair<double,double> cos_sin(double q)
 inline double bestDivision(double c, double s, double C, double S)
 {
   if(std::abs(c) < std::abs(s)) return S/s;
-  return C/s;
+  return C/c;
 }
 
 /// returns either C/cos(q) or S/sin(q) depending on cos and sin

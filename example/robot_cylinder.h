@@ -16,10 +16,10 @@ public:
     q_min = {-M_PI, 0, 0, -M_PI, -M_PI, -M_PI};
     q_max = {M_PI, 0.5, 0.3, M_PI, M_PI, M_PI};
 
-    this->init_wMe();
+    init_wMe();
   }
 
-  void init_wMe() override;
+  void init_wMe();
   vpHomogeneousMatrix fMw(const vpColVector &q) const override;
   vpColVector inverseGeometry(const vpHomogeneousMatrix &Md, const vpColVector &q0) const override;
   vpMatrix fJw(const vpColVector &q) const override;

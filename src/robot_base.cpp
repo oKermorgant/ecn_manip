@@ -23,7 +23,7 @@ bool angleOK(double &qi, double q_min, double q_max)
 }
 
 Robot::Robot(std::shared_ptr<ecn::Node> &_node, const urdf::Model &model)
-  : node(_node)
+    : node(_node)
 {
   // parse robot model
 
@@ -63,10 +63,10 @@ void Robot::checkPose(const vpHomogeneousMatrix &M)
     // passed transform
     vpRxyzVector rot(M.getRotationMatrix());
     std::cout << "Computed:     t = " << M.getTranslationVector().t() <<
-                 " / RPY = " << rot.t() << std::endl;
+        " / RPY = " << rot.t() << std::endl;
 
-    // check with simulation
-    node->printGroundTruth();
+	// check with simulation
+	node->printGroundTruth();
   }
 }
 
@@ -79,8 +79,8 @@ vpHomogeneousMatrix Robot::intermediaryPose(vpHomogeneousMatrix M1, vpHomogeneou
 
   const vpThetaUVector dTU(M1.getRotationMatrix().t() * M2.getRotationMatrix());
   return vpHomogeneousMatrix(
-        M1.getTranslationVector()*(1-a) + M2.getTranslationVector()*a,
-        M1.getRotationMatrix() * vpRotationMatrix(dTU[0]*a, dTU[1]*a, dTU[2]*a));
+      M1.getTranslationVector()*(1-a) + M2.getTranslationVector()*a,
+      M1.getRotationMatrix() * vpRotationMatrix(dTU[0]*a, dTU[1]*a, dTU[2]*a));
 }
 
 
@@ -114,8 +114,8 @@ vpColVector Robot::iterativeIK(const vpHomogeneousMatrix &fMe_des, vpColVector q
 
   uint iter(0);
   while(iter++ < max_iter &&
-        (p.getTranslationVector().frobeniusNorm() > min_lin_error ||
-         std::abs(p.getThetaUVector().getTheta()) > min_ang_error))
+         (p.getTranslationVector().frobeniusNorm() > min_lin_error ||
+          std::abs(p.getThetaUVector().getTheta()) > min_ang_error))
   {
     const auto R{M.getRotationMatrix()};
     v.insert(0, R * p.getTranslationVector());
@@ -224,15 +224,46 @@ std::array<double, 9> Robot::explodeWristMatrix(const vpHomogeneousMatrix &fMe_d
 }
 
 
-void Robot::addCandidate(std::vector<double> q_candidate) const
-{
+void Robot::addCandidate(std::vector<double> q_candidate, std::optional<vpHomogeneousMatrix> Md) const
+{ 
   if(q_candidate.size() != dofs)
   {
     std::cerr << "WARNING in InverseGeometry: adding a candidate with wrong dofs"
               << std::endl;
   }
+  else if(std::any_of(q_candidate.begin(), q_candidate.end(),
+                         [](double q){return std::isnan(q);}))
+  {
+    std::cerr << "WARNING in InverseGeometry: adding a candidate with NaN" << std::endl;
+  }
+  else if(!inAngleLimits(q_candidate))
+  {
+    //std::cerr << "WARNING in InverseGeometry: adding a candidate out of bounds" << std::endl;
+  }
   else
-    q_candidates.push_back(q_candidate);
+  {
+    auto pose_ok{true};
+    if(Md.has_value())
+    {
+      const auto Me{Md->inverse() * this->fMe(q_candidate)};
+      const auto te{Me.getTranslationVector().frobeniusNorm()};
+      const auto ae{Me.getThetaUVector().getTheta()};
+      pose_ok = te + ae < 1e-3;
+    }
+
+	if(pose_ok)
+	{
+	  q_candidates.push_back(q_candidate);
+	  std::cout << "Adding candidate: ";
+	  for(const auto q: q_candidate)
+		std::cout << q << " ";
+	  std::cout << std::endl;
+	}
+	else
+	{
+	  //std::cerr << "WARNING in InverseGeometry: adding a candidate leading to a wrong pose" << std::endl;
+	}
+  }
 }
 
 bool Robot::inAngleLimits(std::vector<double> &q) const
@@ -257,17 +288,6 @@ vpColVector Robot::bestCandidate(const vpColVector &q0, std::vector<double> weig
     return q0;
   }
 
-  // remove out of bounds
-  const auto last_inbounds{std::remove_if(q_candidates.begin(), q_candidates.end(),
-                                          [&](auto &candidate){return !inAngleLimits(candidate);})};
-
-  if(last_inbounds == q_candidates.begin())
-  {
-    std::cerr << "Inverse geometry candidates are out of joint limits" << std::endl;
-    q_candidates.clear();
-    return q0;
-  }
-
   weights.resize(q0.size(), 1);
 
   const auto distanceToq0 = [&](const vpColVector &q1, const vpColVector &q2)
@@ -282,7 +302,7 @@ vpColVector Robot::bestCandidate(const vpColVector &q0, std::vector<double> weig
     return d1 < d2;
   };
 
-  const auto closest{*std::min_element(q_candidates.begin(), last_inbounds, distanceToq0)};
+  const auto closest{*std::min_element(q_candidates.begin(), q_candidates.end(), distanceToq0)};
   q_candidates.clear();
   return closest;
 }
