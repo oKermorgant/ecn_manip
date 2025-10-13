@@ -81,7 +81,10 @@ class Joint:
         Mx = Homogeneous([self.a, 0, 0], [self.alpha, 0, 0])
         Mz = Homogeneous([0, 0, self.r], [0, 0, self.theta])
         M = np.dot(Mx,Mz)
-        R = Rotation.from_matrix(M[:3,:3])
+        try:
+            R = Rotation.from_matrix(M[:3,:3])
+        except:
+            R = Rotation.from_dcm(M[:3,:3])
 
         jtype = 'fixed'
         if self.dir:
