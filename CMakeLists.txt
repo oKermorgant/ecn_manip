@@ -4,19 +4,14 @@ project(ecn_manip)
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-find_package(VISP REQUIRED COMPONENTS core)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
-
-include_directories(include ${VISP_INCLUDE_DIRS})
 
 # main library
 ament_auto_add_library(ecn_manip SHARED src/robot_base.cpp
                                 src/trig_solvers.cpp
                                 src/ur_kin.cpp
                                 src/node.cpp)
-target_include_directories(ecn_manip PUBLIC include ${VISP_INCLUDE_DIRS})
-target_link_libraries(ecn_manip ${VISP_LIBRARIES})
 
 # Main executable
 ament_auto_add_executable(control control.cpp
