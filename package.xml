@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>ecn_manip</name>
-  <version>0.0.0</version>
-  <description>The ecn_manip package</description>
+  <version>2.0.0</version>
+  <description>Package to learn about kinematic modeling</description>
 
-  <maintainer email="olivier@todo.todo">Olivier Kermorgant</maintainer>
+  <maintainer email="olivier.kermorgant@ec-nantes.fr">Olivier Kermorgant</maintainer>
 
   <license>MIT</license>
 
@@ -14,6 +14,7 @@
   <depend>tf2_ros</depend>
   <depend>urdf</depend>
   <depend>urdfdom_headers</depend>
+
 
   <export>
        <build_type>ament_cmake</build_type>
