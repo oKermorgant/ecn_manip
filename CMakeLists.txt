@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.15)
 project(ecn_manip)
 
 find_package(ament_cmake REQUIRED)
@@ -40,6 +40,12 @@ target_link_libraries(test_solvers ecn_manip)
 
 add_executable(example_RRRP example/robot_rrrp.h example/robot_rrrp.cpp example/rrrp_solver.cpp)
 target_link_libraries(example_RRRP ecn_manip)
+
+add_executable(example_5dof example/5dof_solver.cpp)
+target_link_libraries(example_5dof ecn_manip)
+
+add_executable(example_6dof example/6dof_solver.cpp)
+target_link_libraries(example_6dof ecn_manip)
 
 add_executable(example_cylinder example/robot_cylinder.h example/robot_cylinder.cpp example/cylinder_solver.cpp)
 target_link_libraries(example_cylinder ecn_manip)
