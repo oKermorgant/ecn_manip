@@ -14,7 +14,7 @@
   <depend>tf2_ros</depend>
   <depend>urdf</depend>
   <depend>urdfdom_headers</depend>
-  <depend>visp</depend>
+
 
 
   <export>
