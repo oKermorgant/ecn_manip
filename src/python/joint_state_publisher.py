@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
 
-import rclpy
-import random
-
 from python_qt_binding.QtCore import pyqtSlot
 from python_qt_binding.QtCore import Qt
 from python_qt_binding.QtCore import Signal
 from python_qt_binding.QtGui import QFont
-from python_qt_binding.QtWidgets import QApplication
 from python_qt_binding.QtWidgets import QHBoxLayout
 from python_qt_binding.QtWidgets import QLabel
 from python_qt_binding.QtWidgets import QLineEdit
@@ -16,23 +12,20 @@ from python_qt_binding.QtWidgets import QSlider
 from python_qt_binding.QtWidgets import QVBoxLayout
 from python_qt_binding.QtWidgets import QGridLayout
 from python_qt_binding.QtWidgets import QScrollArea
-from python_qt_binding.QtWidgets import QSpinBox
 from python_qt_binding.QtWidgets import QWidget
-
-import xml.dom.minidom
 from sensor_msgs.msg import JointState
-from math import pi
-from threading import Thread
-import sys
-import signal
 import math
 
+from python_qt_binding import QT_BINDING_VERSION
+qt5 = QT_BINDING_VERSION.startswith('5.')
+
+
 RANGE = 10000
+
 
 class JointStatePublisher:
 
     def __init__(self, joint_manual, node):
-        
         self.node = node
         from robot_description import Arm
         self.free_joints = {}
@@ -53,12 +46,13 @@ class JointStatePublisher:
         self.pub = node.create_publisher(JointState, 'position_manual', 5)
         
     def publish(self):
-        self.msg.header.stamp  = self.node.get_clock().now().to_msg()
+        self.msg.header.stamp = self.node.get_clock().now().to_msg()
         
-        for i,name in enumerate(self.msg.name):
+        for i, name in enumerate(self.msg.name):
             self.msg.position[i] = self.free_joints[name]['position']
         
         self.pub.publish(self.msg)
+
 
 class JointStatePublisherGui(QWidget):
     sliderUpdateTrigger = Signal()
@@ -71,11 +65,13 @@ class JointStatePublisherGui(QWidget):
         self.scrollable = QWidget()
         self.gridlayout = QGridLayout()
         self.scroll = QScrollArea()
-        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        policy = Qt.ScrollBarAlwaysOff if qt5 else Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        self.scroll.setVerticalScrollBarPolicy(policy)
+        self.scroll.setHorizontalScrollBarPolicy(policy)
         self.scroll.setWidgetResizable(True)
 
-        font = QFont("Helvetica", 9, QFont.Bold)
+        font = QFont("Helvetica", 9)
+        font.setBold(True)
 
         ### Generate sliders ###
         sliders = []
@@ -92,14 +88,14 @@ class JointStatePublisherGui(QWidget):
             label.setFont(font)
             row_layout.addWidget(label)
             display = QLineEdit("0.00")
-            display.setAlignment(Qt.AlignRight)
+            display.setAlignment(Qt.AlignRight if qt5 else Qt.AlignmentFlag.AlignRight)
             display.setFont(font)
             display.setReadOnly(True)
             row_layout.addWidget(display)
 
             joint_layout.addLayout(row_layout)
 
-            slider = QSlider(Qt.Horizontal)
+            slider = QSlider(Qt.Horizontal if qt5 else Qt.Orientation.Horizontal)
 
             slider.setFont(font)
             slider.setRange(0, RANGE)

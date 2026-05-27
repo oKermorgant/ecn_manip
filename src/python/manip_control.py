@@ -1,14 +1,23 @@
 #!/usr/bin/env python3
 
-from PyQt5 import QtWidgets
+from python_qt_binding import QtWidgets
 import sys
 from threading import Thread
-import manip_gui, joint_state_publisher, manip_plot
+import joint_state_publisher, manip_plot
 import rclpy
 from rclpy.node import Node
 import signal
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import JointState
+
+
+from python_qt_binding import QT_BINDING_VERSION
+qt5 = QT_BINDING_VERSION.startswith('5.')
+
+if qt5:
+    import manip_gui5 as manip_gui
+else:
+    import manip_gui6 as manip_gui
 
 rb_order = ('manual', 'twist', 'p2p_direct','p2p_interp','p2p_line','p2p_vel')
 
@@ -143,5 +152,4 @@ if __name__ == '__main__':
     
     window = manipControl(node)
     window.show()
-    sys.exit(app.exec_())
-    
+    sys.exit(app.exec_() if qt5 else app.exec())

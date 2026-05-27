@@ -13,6 +13,9 @@
 #include <tf2_ros/buffer.h>
 #include <urdf/model.h>
 
+namespace visp {}
+using namespace visp;
+
 namespace ecn
 {
 

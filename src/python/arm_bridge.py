@@ -34,14 +34,16 @@ rclpy.init(args=None)
 node = Node('joint_control')
 
 def now():
-    s,ns = node.get_clock().now().seconds_nanoseconds()
+    s, ns = node.get_clock().now().seconds_nanoseconds()
     return s + ns*1e-9
+
 
 # get joint properties
 from robot_description import Arm
 arm = Arm(node, T)
 N = arm.dof
         
+
 print(f"Initializing bridge with {N} joints")
 
 def inJointLimits(q):
