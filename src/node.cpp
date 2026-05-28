@@ -1,5 +1,4 @@
 #include <ecn_manip/node.h>
-#include <urdf/model.h>
 #include <std_msgs/msg/string.hpp>
 
 namespace ecn
@@ -12,8 +11,14 @@ void Node::init(int argc, char **argv)
 }
 
 Node::Node(double _rate)
-  : rclcpp::Node("control"), nh(this), rate(_rate)
-  , tfBuffer(get_clock()), tl(tfBuffer), br(nh)
+    : rclcpp::Node("control"), nh(this), rate(_rate)
+    , tfBuffer(get_clock()), tl(tfBuffer),
+#ifdef ROS_HEADERS_H_DEPRECATED
+    br(decltype(br)::RequiredInterfaces(this->get_node_parameters_interface(),
+                                        this->get_node_topics_interface()))
+#else
+    br(nh)
+#endif
 {
   exec.add_node(nh);
 }
@@ -23,10 +28,10 @@ std::unique_ptr<urdf::Model> Node::robot() const
   // get robot_description from
   const auto rsp{std::make_shared<rclcpp::Node>("rsp_reader")};
   const auto rsp_param{std::make_shared<rclcpp::SyncParametersClient>
-                      (rsp, "/robot_state_publisher")};
+                       (rsp, "/robot_state_publisher")};
   std::cout << "Reading robot description... " << std::flush;
   rclcpp::executors::SingleThreadedExecutor exec;
-  exec.add_node(rsp);
+  //exec.add_node(rsp);
   while(true)
   {
     exec.spin_some();
@@ -34,8 +39,6 @@ std::unique_ptr<urdf::Model> Node::robot() const
     const auto urdf_xml{rsp_param->get_parameter<std::string>("robot_description")};
     if(urdf_xml.empty())
       continue;
-
-
 
     auto model{std::make_unique<urdf::Model>()};
     model->initString(urdf_xml);
@@ -81,28 +84,28 @@ void Node::initInterface()
   desired_pose.data.resize(6);
 
   position_sub = create_subscription<sensor_msgs::msg::JointState>
-                 ("/joint_states", 10, [this](sensor_msgs::msg::JointState::UniquePtr msg)
-  {
-                 for(unsigned int i=0;i<dofs;++i)
-      q[i] = msg->position[i];});
+      ("/joint_states", 10, [this](sensor_msgs::msg::JointState::UniquePtr msg)
+       {
+         for(unsigned int i=0;i<dofs;++i)
+           q[i] = msg->position[i];});
 
-twist_sub = create_subscription<geometry_msgs::msg::Twist>
-            ("gui/twist_manual", 10, [this](geometry_msgs::msg::Twist::UniquePtr msg)
-{
-            desired_twist[0] = msg->linear.x;
-desired_twist[1] = msg->linear.y;
-desired_twist[2] = msg->linear.z;
-desired_twist[3] = msg->angular.x;
-desired_twist[4] = msg->angular.y;
-desired_twist[5] = msg->angular.z;});
+  twist_sub = create_subscription<geometry_msgs::msg::Twist>
+      ("gui/twist_manual", 10, [this](geometry_msgs::msg::Twist::UniquePtr msg)
+       {
+         desired_twist[0] = msg->linear.x;
+         desired_twist[1] = msg->linear.y;
+         desired_twist[2] = msg->linear.z;
+         desired_twist[3] = msg->angular.x;
+         desired_twist[4] = msg->angular.y;
+         desired_twist[5] = msg->angular.z;});
 
-config_sub = create_subscription<sensor_msgs::msg::JointState>
-             ("gui/config", 10, [this](sensor_msgs::msg::JointState::UniquePtr msg)
-{
-             config.updateFrom(msg->name, msg->position);
-             });
+  config_sub = create_subscription<sensor_msgs::msg::JointState>
+      ("gui/config", 10, [this](sensor_msgs::msg::JointState::UniquePtr msg)
+       {
+         config.updateFrom(msg->name, msg->position);
+       });
 
-rclcpp::spin_some(nh);
+  exec.spin_some();
 }
 
 void Node::sendTransform(const vpHomogeneousMatrix &M, const std::string &frame)
@@ -159,19 +162,19 @@ void Node::printGroundTruth()
 {
   // check with simulation
   if(tfBuffer.canTransform("base_link", "tool0", tf2::TimePointZero,
-                           tf2::durationFromSec(1)))
+                            tf2::durationFromSec(1)))
   {
     auto transform = tfBuffer.lookupTransform("base_link", "tool0", tf2::TimePointZero);
     vpTranslationVector t(transform.transform.translation.x,
                           transform.transform.translation.y,
                           transform.transform.translation.z);
     vpRxyzVector rot(vpThetaUVector(
-                       vpQuaternionVector(transform.transform.rotation.x,
-                                          transform.transform.rotation.y,
-                                          transform.transform.rotation.z,
-                                          transform.transform.rotation.w)));
+        vpQuaternionVector(transform.transform.rotation.x,
+                           transform.transform.rotation.y,
+                           transform.transform.rotation.z,
+                           transform.transform.rotation.w)));
     std::cout << "Ground truth: t = " << t.t() <<
-                 " / RPY = " << rot.t() << std::endl << std::endl;
+        " / RPY = " << rot.t() << std::endl << std::endl;
   }
 }
 }
