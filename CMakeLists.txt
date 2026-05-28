@@ -9,6 +9,12 @@ find_package(VISP REQUIRED COMPONENTS core)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
+# get ROSDISTRO to adapt fors header extension
+if("$ENV{ROS_DISTRO}" STRGREATER_EQUAL "lyrical")
+  add_compile_definitions(ROS_HEADERS_H_DEPRECATED)
+endif()
+
+
 # main library
 ament_auto_add_library(ecn_manip SHARED src/robot_base.cpp
                                 src/trig_solvers.cpp

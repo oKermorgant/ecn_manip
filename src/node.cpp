@@ -15,6 +15,7 @@ Node::Node(double _rate)
   : rclcpp::Node("control"), nh(this), rate(_rate)
   , tfBuffer(get_clock()), tl(tfBuffer), br(nh)
 {
+  exec.add_node(nh);
 }
 
 std::unique_ptr<urdf::Model> Node::robot() const
@@ -24,9 +25,11 @@ std::unique_ptr<urdf::Model> Node::robot() const
   const auto rsp_param{std::make_shared<rclcpp::SyncParametersClient>
                       (rsp, "/robot_state_publisher")};
   std::cout << "Reading robot description... " << std::flush;
+  rclcpp::executors::SingleThreadedExecutor exec;
+  exec.add_node(rsp);
   while(true)
   {
-    rclcpp::spin_some(rsp);
+    exec.spin_some();
     rsp_param->wait_for_service();
     const auto urdf_xml{rsp_param->get_parameter<std::string>("robot_description")};
     if(urdf_xml.empty())
@@ -65,7 +68,7 @@ int Node::cycleLength() const
 
 bool Node::ok()
 {
-  rclcpp::spin_some(nh);
+  exec.spin_some();
   rate.sleep();
   return rclcpp::ok();
 }

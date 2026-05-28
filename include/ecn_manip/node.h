@@ -8,10 +8,18 @@
 #include <geometry_msgs/msg/twist.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
+#ifdef ROS_HEADERS_H_DEPRECATED
+#include <tf2_ros/transform_broadcaster.hpp>
+#include <tf2_ros/transform_listener.hpp>
+#include <tf2_ros/buffer.hpp>
+#include <urdf/model.hpp>
+#else
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
 #include <urdf/model.h>
+#endif
+
 
 namespace visp {}
 using namespace visp;
@@ -72,6 +80,7 @@ public:
   std::string robot_name;
 
 
+
 private:
   void initInterface();
 
@@ -83,6 +92,7 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr twist_sub;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr config_sub;
 
+  rclcpp::executors::SingleThreadedExecutor exec;
   tf2_ros::Buffer tfBuffer;
   tf2_ros::TransformListener tl;
   tf2_ros::TransformBroadcaster br;
