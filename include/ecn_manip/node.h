@@ -1,7 +1,7 @@
 #ifndef ECN_MANIP_NODE_H
 #define ECN_MANIP_NODE_H
 
-#include <visp/vpColVector.h>
+#include <visp3/core/vpColVector.h>
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/rate.hpp>

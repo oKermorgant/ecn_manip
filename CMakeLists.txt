@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.15)
 project(ecn_manip)
 
+# ROS packages + visp
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
-
 find_package(VISP REQUIRED COMPONENTS core)
-message(${VISP_INCLUDE_DIRS})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
@@ -24,7 +23,6 @@ ament_auto_add_executable(control control.cpp
                robot_ur10.cpp
                robot_kr16.cpp
                )
-target_include_directories(control PUBLIC include)
 target_link_libraries(control ecn_manip)
 
 # Other executables

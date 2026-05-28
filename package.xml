@@ -15,8 +15,6 @@
   <depend>urdf</depend>
   <depend>urdfdom_headers</depend>
 
-
-
   <export>
        <build_type>ament_cmake</build_type>
   </export>
