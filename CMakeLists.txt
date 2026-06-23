@@ -14,7 +14,6 @@ if("$ENV{ROS_DISTRO}" STRGREATER_EQUAL "lyrical")
   add_compile_definitions(ROS_HEADERS_H_DEPRECATED)
 endif()
 
-
 # main library
 ament_auto_add_library(ecn_manip SHARED src/robot_base.cpp
                                 src/trig_solvers.cpp
